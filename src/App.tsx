@@ -8,6 +8,12 @@ const supabaseAnonKey =
 
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
+// 🖼 Keep your product images
+const PRODUCT_IMAGES = {
+  wagyu_rump_cap: "data:image/jpeg;base64,...", // shortened for clarity
+  // add other products here
+};
+
 function App() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -66,6 +72,13 @@ function App() {
           ))}
         </ul>
       )}
+
+      {/* Example product image */}
+      <img
+        src={PRODUCT_IMAGES.wagyu_rump_cap}
+        alt="Wagyu Rump Cap"
+        style={{ width: "200px", marginTop: "20px" }}
+      />
 
       <button
         onClick={() =>
