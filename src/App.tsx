@@ -1,3 +1,10 @@
+import { createClient } from "@supabase/supabase-js";
+
+const supabaseUrl = "https://uulqaskjgubfovyeqyil.supabase.co";
+const supabaseAnonKey =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...";
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
 import { useState, useEffect } from "react";
 
 const PRODUCT_IMAGES = {
