@@ -1,3 +1,21 @@
+function App() {
+  // add this function inside App
+  async function saveOrder() {
+    const { data, error } = await supabase
+      .from("orders")
+      .insert([{ client_id: 1, product_id: 1, qty: 2, status: "open" }]);
+
+    if (error) console.error("Error saving order:", error.message);
+    else console.log("Order saved:", data);
+  }
+
+  return (
+    <div>
+      <button onClick={saveOrder}>Save Order</button>
+    </div>
+  );
+}
+
 import { createClient } from "@supabase/supabase-js";
 
 const supabaseUrl = "https://uulqaskjgubfovyeqyil.supabase.co";
