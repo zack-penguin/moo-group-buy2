@@ -1,80 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
+import { useState, useEffect } from 'react';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
-
-import { useState, useEffect } from 'react';
-
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-const store = {
-async get(key) {
-try {
-const res = await fetch(`${SUPABASE_URL}/rest/v1/settings?key=eq.${encodeURIComponent(key)}&select=value`, {
-headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
-});
-const data = await res.json();
-if (!data || data.length === 0) return null;
-return JSON.parse(data[0].value);
-} catch { return null; }
-},
-async set(key, val) {
-try {
-await fetch(`${SUPABASE_URL}/rest/v1/settings`, {
-method: 'POST',
-headers: {
-'apikey': SUPABASE_KEY,
-'Authorization': `Bearer ${SUPABASE_KEY}`,
-'Content-Type': 'application/json',
-'Prefer': 'resolution=merge-duplicates'
-},
-body: JSON.stringify({ key, value: JSON.stringify(val) })
-});
-} catch {}
-},
-};
-
-// unitPrice IS the slab price — the only price shown to customers
-import { useState, useEffect } from 'react';
-import { supabase } from './supabaseClient'; // your init file
-
-function ProductsPage() {
-  const [products, setProducts] = useState([]);
-
-  useEffect(() => {
-    const fetchProducts = async () => {
-      const { data, error } = await supabase
-        .from('products')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error(error);
-      } else {
-        setProducts(data);
-      }
-    };
-
-    fetchProducts();
-  }, []);
-
-  return (
-    <div>
-      {products.map((p) => (
-        <div key={p.id}>
-          <h3>{p.name}</h3>
-          <p>${p.price}</p>
-          {p.image_url && <img src={p.image_url} alt={p.name} />}
-        </div>
-      ))}
-    </div>
-  );
-}
-
-export default ProductsPage;
-
 
 const ADMIN_PASS = 'moo2024';
 const OWNER_WA = '6596625208';
@@ -104,7 +33,6 @@ const Badge = ({ children, color = G.muted }) => (
 );
 
 const Modal = ({ children, onClose }) => (
-
   <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: '#000c', zIndex: 999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
     <div onClick={e => e.stopPropagation()} style={{ background: G.card, border: `1px solid ${G.border}`, borderRadius: 10, padding: 28, maxWidth: 440, width: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
       {children}
@@ -289,8 +217,8 @@ S${fmtPrice(configuring.unitPrice)}/{configuring.unit}
       <div key={p.id} style={{ background: G.card, border: `1px solid ${G.border}`, borderRadius: 10, overflow: 'hidden', transition: 'transform 0.18s, box-shadow 0.18s' }}
         onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 8px 32px #0006'; }}
         onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = ''; }}>
-        {p.imageKey && PRODUCT_IMAGES[p.imageKey]
-          ? <img src={PRODUCT_IMAGES[p.imageKey]} alt={p.name} style={{ width: '100%', height: 160, objectFit: 'cover', objectPosition: 'center' }} />
+        {p.image_url
+          ? <img src={p.image_url} alt={p.name} style={{ width: '100%', height: 160, objectFit: 'cover', objectPosition: 'center' }} />
           : <div style={{ background: p.isEnquiry ? 'linear-gradient(135deg, #1a1a2e, #0f0f1a)' : 'linear-gradient(135deg, #2a1a18, #1a1210)', height: 80, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 40 }}>{p.emoji}</div>
         }
         <div style={{ padding: 18 }}>
@@ -342,7 +270,6 @@ const total = parseFloat(cart.reduce((a, b) => a + b.lineTotal, 0).toFixed(2));
 const submit = async () => {
 if (!name.trim() || !wa.trim() || cart.length === 0) return alert('Please fill in your name, WhatsApp number, and add at least one item.');
 const order = { id: 'o' + Date.now(), name: name.trim(), wa: wa.trim(), items: cart, total, status: 'Pending', ts: Date.now() };
-const { data: existing } = await supabase.from('moo_orders').select('*');
 await supabase.from('moo_orders').insert([order]);
 setSubmitted(order);
 setCart([]);
@@ -470,15 +397,16 @@ const interval = setInterval(loadOrders, 5000);
 return () => clearInterval(interval);
 }
 }, [authed]);
+
 const loadOrders = async () => { const { data } = await supabase.from('moo_orders').select('*'); setOrders(data || []); };
 const saveOrders = async o => { setOrders(o); await supabase.from('moo_orders').upsert(o); };
 const updateStatus = (id, status) => saveOrders(orders.map(o => o.id === id ? { ...o, status } : o));
 const deleteOrder = id => saveOrders(orders.filter(o => o.id !== id));
 const saveProd = async p => {
 const updated = products.find(x => x.id === p.id) ? products.map(x => x.id === p.id ? p : x) : [...products, { ...p, id: 'p' + Date.now() }];
-setProducts(updated); await supabase.from('settings').upsert({ key: 'products', value: JSON.stringify(updated) }); setEditProd(null);
+setProducts(updated); await supabase.from('products').upsert(updated); setEditProd(null);
 };
-const deleteProd = async id => { const u = products.filter(p => p.id !== id); setProducts(u); await supabase.from('settings').upsert({ key: 'products', value: JSON.stringify(u) }); };
+const deleteProd = async id => { const u = products.filter(p => p.id !== id); setProducts(u); await supabase.from('products').delete().eq('id', id); };
 const toggleRound = async () => { const n = !roundOpen; setRoundOpen(n); await supabase.from('settings').upsert({ key: 'roundOpen', value: JSON.stringify(n) }); };
 const exportCSV = () => {
 const rows = [['Name', 'WhatsApp', 'Items', 'Total', 'Status', 'Date'],
@@ -616,17 +544,21 @@ return (
 
 export default function App() {
 const [page, setPage] = useState('Shop');
-const [products, setProducts] = useState(SEED_PRODUCTS);
+const [products, setProducts] = useState([]);
 const [roundOpen, setRoundOpen] = useState(true);
 const [cart, setCart] = useState([]);
 const [loaded, setLoaded] = useState(false);
 
 useEffect(() => {
 (async () => {
-const { data: pData } = await supabase.from('settings').select('value').eq('key', 'products');
-const { data: rData } = await supabase.from('settings').select('value').eq('key', 'roundOpen');
-if (pData && pData[0]) setProducts(JSON.parse(pData[0].value));
-if (rData && rData[0]) setRoundOpen(JSON.parse(rData[0].value));
+try {
+const { data: pData, error: pError } = await supabase.from('products').select('*');
+const { data: rData, error: rError } = await supabase.from('settings').select('value').eq('key', 'roundOpen');
+if (!pError && pData) setProducts(pData);
+if (!rError && rData && rData[0]) setRoundOpen(JSON.parse(rData[0].value));
+} catch (err) {
+console.error('Error loading data:', err);
+}
 setLoaded(true);
 })();
 }, []);
