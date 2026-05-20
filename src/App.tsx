@@ -14,33 +14,121 @@ const G = {
   green: '#27ae60', amber: '#e67e22', gold: '#c9a84c',
 };
 
-const css = `@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Barlow+Condensed:wght@400;600;700&family=Barlow:wght@400;500&display=swap'); *, *::before, *::af[...]
+const css = `@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Barlow+Condensed:wght@400;600;700&family=Barlow:wght@400;500&display=swap');
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: ${G.bg}; color: ${G.cream}; font-family: 'Barlow', sans-serif; }
+input, textarea, select { background: ${G.surface}; border: 1px solid ${G.border}; color: ${G.cream}; border-radius: 6px; padding: 10px 14px; font-size: 14px; width: 100%; outline: none; font-family: 'Barlow', sans-serif; }
+input:focus, textarea:focus, select:focus { border-color: ${G.red}; }
+table { width: 100%; border-collapse: collapse; }
+th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid ${G.border}; font-size: 13px; }
+th { font-family: 'Barlow Condensed', sans-serif; letter-spacing: .08em; text-transform: uppercase; color: ${G.muted}; font-weight: 600; }
+.notice-bar { background: #1a1209; border: 1px solid ${G.gold}44; border-radius: 8px; padding: 16px 20px; margin-bottom: 28px; }
+select option { background: ${G.surface}; }
+`;
 
-const Btn = ({ children, onClick, variant = 'primary', size = 'md', disabled, style = {} }) => {
-  const base = { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: size === 'sm' ? '6px 14px' : '11px 22px', fontSize: size === 'sm' ? 13 : 14, fontWeight: 600, [...]
-  const variants = {
+// ── Types ──────────────────────────────────────────────────────────────────────
+
+interface Product {
+  id: string;
+  name: string;
+  description: string;
+  emoji: string;
+  unitPrice: number;
+  unit: string;
+  image_url?: string;
+  active?: boolean;
+  isEnquiry?: boolean;
+  checkAvailability?: boolean;
+  created_at?: string;
+}
+
+interface CartItem extends Product {
+  cartKey: string;
+  qty: number;
+  lineTotal: number;
+  sliceWeight?: number;
+  pieces?: number;
+  totalKg?: number;
+  enquiryNote?: string;
+}
+
+interface Order {
+  id: string;
+  name: string;
+  wa: string;
+  items: CartItem[];
+  total: number;
+  status: string;
+  ts: number;
+}
+
+// ── Btn ───────────────────────────────────────────────────────────────────────
+
+type BtnVariant = 'primary' | 'ghost' | 'danger' | 'green' | 'gold';
+
+interface BtnProps {
+  children: React.ReactNode;
+  onClick?: () => void;
+  variant?: BtnVariant;
+  size?: 'sm' | 'md';
+  disabled?: boolean;
+  style?: React.CSSProperties;
+}
+
+const Btn = ({ children, onClick, variant = 'primary', size = 'md', disabled = false, style = {} }: BtnProps) => {
+  const base: React.CSSProperties = {
+    display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+    padding: size === 'sm' ? '6px 14px' : '11px 22px',
+    fontSize: size === 'sm' ? 13 : 14, fontWeight: 600,
+    fontFamily: "'Barlow Condensed', sans-serif", letterSpacing: '.06em',
+    borderRadius: 6, border: 'none', cursor: disabled ? 'not-allowed' : 'pointer',
+    opacity: disabled ? 0.5 : 1, transition: 'opacity .15s, transform .1s', textDecoration: 'none',
+  };
+  const variants: Record<BtnVariant, React.CSSProperties> = {
     primary: { background: G.red, color: '#fff' },
     ghost: { background: 'transparent', color: G.cream, border: `1px solid ${G.border}` },
     danger: { background: '#3a1a18', color: G.red, border: `1px solid ${G.redDim}` },
     green: { background: '#1a3a25', color: G.green, border: `1px solid #1d5c35` },
     gold: { background: '#2a1f08', color: G.gold, border: `1px solid ${G.gold}66` },
   };
-  return <button onClick={onClick} disabled={disabled} style={{ ...base, ...variants[variant], ...style }}>{children}</button>;
+  return (
+    <button onClick={onClick} disabled={disabled} style={{ ...base, ...variants[variant], ...style }}>
+      {children}
+    </button>
+  );
 };
 
-const Badge = ({ children, color = G.muted }) => (
-  <span style={{ display: 'inline-block', padding: '2px 10px', borderRadius: 20, fontSize: 11, fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, letterSpacing: '.08em', textTransform: 'up[...]
+// ── Badge ─────────────────────────────────────────────────────────────────────
+
+const Badge = ({ children, color = G.muted }: { children: React.ReactNode; color?: string }) => (
+  <span style={{
+    display: 'inline-block', padding: '2px 10px', borderRadius: 20, fontSize: 11,
+    fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, letterSpacing: '.08em',
+    textTransform: 'uppercase', background: color + '22', color,
+  }}>
+    {children}
+  </span>
 );
 
-const Modal = ({ children, onClose }) => (
-  <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: '#000c', zIndex: 999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-    <div onClick={e => e.stopPropagation()} style={{ background: G.card, border: `1px solid ${G.border}`, borderRadius: 10, padding: 28, maxWidth: 440, width: '100%', maxHeight: '90vh', overflowY: 'au[...]
+// ── Modal ─────────────────────────────────────────────────────────────────────
+
+const Modal = ({ children, onClose }: { children: React.ReactNode; onClose: () => void }) => (
+  <div onClick={onClose} style={{
+    position: 'fixed', inset: 0, background: '#000c', zIndex: 999,
+    display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20,
+  }}>
+    <div onClick={e => e.stopPropagation()} style={{
+      background: G.card, border: `1px solid ${G.border}`, borderRadius: 10,
+      padding: 28, maxWidth: 440, width: '100%', maxHeight: '90vh', overflowY: 'auto',
+    }}>
       {children}
     </div>
   </div>
 );
 
-function Nav({ page, setPage, roundOpen }) {
+// ── Nav ───────────────────────────────────────────────────────────────────────
+
+function Nav({ page, setPage, roundOpen }: { page: string; setPage: (p: string) => void; roundOpen: boolean }) {
   return (
     <nav style={{ background: G.surface, borderBottom: `2px solid ${G.red}`, position: 'sticky', top: 0, zIndex: 100 }}>
       <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 20px', height: 60, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -55,9 +143,18 @@ function Nav({ page, setPage, roundOpen }) {
           <Badge color={roundOpen ? G.green : G.red}>{roundOpen ? '● OPEN' : '● CLOSED'}</Badge>
           <div style={{ display: 'flex', gap: 4, marginLeft: 10 }}>
             {['Shop', 'Order'].map(n => (
-              <button key={n} onClick={() => setPage(n)} style={{ background: page === n ? G.red : 'transparent', color: page === n ? '#fff' : G.muted, padding: '5px 12px', fontSize: 12, borderRadius:[...]
+              <button key={n} onClick={() => setPage(n)} style={{
+                background: page === n ? G.red : 'transparent', color: page === n ? '#fff' : G.muted,
+                padding: '5px 12px', fontSize: 12, borderRadius: 5, border: 'none', cursor: 'pointer',
+                fontFamily: "'Barlow Condensed', sans-serif", letterSpacing: '.08em', fontWeight: 600,
+              }}>
+                {n}
+              </button>
             ))}
-            <button onClick={() => setPage('Admin')} style={{ background: 'transparent', color: G.bg, padding: '5px 12px', fontSize: 12, borderRadius: 5, border: 'none', userSelect: 'none' }}>⚙️</[...]
+            <button onClick={() => setPage('Admin')} style={{
+              background: 'transparent', color: G.bg, padding: '5px 12px',
+              fontSize: 12, borderRadius: 5, border: 'none', userSelect: 'none', cursor: 'pointer',
+            }}>⚙️</button>
           </div>
         </div>
       </div>
@@ -65,22 +162,29 @@ function Nav({ page, setPage, roundOpen }) {
   );
 }
 
-function ShopPage({ products, setPage, cart, setCart }) {
-  const [configuring, setConfiguring] = useState(null);
+// ── ShopPage ──────────────────────────────────────────────────────────────────
+
+function ShopPage({ products, setPage, cart, setCart }: {
+  products: Product[];
+  setPage: (p: string) => void;
+  cart: CartItem[];
+  setCart: React.Dispatch<React.SetStateAction<CartItem[]>>;
+}) {
+  const [configuring, setConfiguring] = useState<Product | null>(null);
   const [sliceWeight, setSliceWeight] = useState('250');
   const [pieces, setPieces] = useState('2');
   const [enquiryNote, setEnquiryNote] = useState('');
-  const [toast, setToast] = useState(null);
+  const [toast, setToast] = useState<string | null>(null);
 
-  const showToast = (name) => {
+  const showToast = (name: string) => {
     setToast(name);
     setTimeout(() => setToast(null), 2500);
   };
 
-  const isKg = p => p.unit === 'kg';
-  const isEnquiry = p => p.unit === 'enquiry';
+  const isKg = (p: Product) => p.unit === 'kg';
+  const isEnquiry = (p: Product) => p.unit === 'enquiry';
 
-  const openModal = p => { setSliceWeight('250'); setPieces('2'); setEnquiryNote(''); setConfiguring(p); };
+  const openModal = (p: Product) => { setSliceWeight('250'); setPieces('2'); setEnquiryNote(''); setConfiguring(p); };
 
   const confirmAdd = () => {
     const p = configuring;
@@ -97,15 +201,17 @@ function ShopPage({ products, setPage, cart, setCart }) {
     if (sw <= 0 || pc <= 0) return alert('Please enter a valid slice weight and number of pieces.');
     const totalKg = parseFloat((sw * pc / 1000).toFixed(4));
     const lineTotal = parseFloat((totalKg * p.unitPrice).toFixed(2));
-    setCart(c => [...c, { ...p, cartKey: `${p.id}_${Date.now()}`, sliceWeight: sw, pieces: pc, totalKg, lineTotal }]);
+    setCart(c => [...c, { ...p, cartKey: `${p.id}_${Date.now()}`, sliceWeight: sw, pieces: pc, totalKg, lineTotal, qty: 1 }]);
     showToast(p.name);
     setConfiguring(null);
   };
 
-  const addPackToCart = p => {
+  const addPackToCart = (p: Product) => {
     setCart(c => {
       const ex = c.find(x => x.id === p.id && !x.sliceWeight);
-      if (ex) return c.map(x => (x.id === p.id && !x.sliceWeight) ? { ...x, qty: x.qty + 1, lineTotal: parseFloat(((x.qty + 1) * p.unitPrice).toFixed(2)) } : x);
+      if (ex) return c.map(x => (x.id === p.id && !x.sliceWeight)
+        ? { ...x, qty: x.qty + 1, lineTotal: parseFloat(((x.qty + 1) * p.unitPrice).toFixed(2)) }
+        : x);
       return [...c, { ...p, cartKey: p.id, qty: 1, lineTotal: p.unitPrice }];
     });
     showToast(p.name);
@@ -116,12 +222,10 @@ function ShopPage({ products, setPage, cart, setCart }) {
   const estKg = sw > 0 && pc > 0 ? (sw * pc / 1000).toFixed(3) : null;
   const estCost = configuring && estKg ? (parseFloat(estKg) * configuring.unitPrice).toFixed(2) : null;
   const cartCount = cart.length;
-
-  const fmtPrice = v => v % 1 === 0 ? `${v}` : v.toFixed(2);
+  const fmtPrice = (v: number) => v % 1 === 0 ? `${v}` : v.toFixed(2);
 
   return (
     <div style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 20px' }}>
-      {/* Cart Toast Notification */}
       {toast && (
         <div style={{
           position: 'fixed', bottom: 28, left: '50%', transform: 'translateX(-50%)',
@@ -178,7 +282,6 @@ function ShopPage({ products, setPage, cart, setCart }) {
                   <div style={{ fontSize: 11, color: G.muted, marginTop: 4 }}>how many slices</div>
                 </div>
               </div>
-
               {estKg && (
                 <div style={{ background: G.surface, borderRadius: 6, padding: 14, marginBottom: 16 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
@@ -202,15 +305,15 @@ function ShopPage({ products, setPage, cart, setCart }) {
       )}
 
       <div className='notice-bar'>
-        <div style={{ fontFamily: "'Barlow Condensed', sans-serif", color: G.gold, fontSize: 13, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: 6 }}>ℹ️ Important — Please Read<[...]
+        <div style={{ fontFamily: "'Barlow Condensed', sans-serif", color: G.gold, fontSize: 13, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: 6 }}>ℹ️ Important — Please Read</div>
         <p style={{ fontSize: 13, lineHeight: 1.7, color: G.cream }}>
-          All beef is sourced directly from <strong style={{ color: G.gold }}>Mornington Butchery & Pantry</strong>. I am simply collating orders on behalf of our group — I do not process, prepare, [...]
+          All beef is sourced directly from <strong style={{ color: G.gold }}>Mornington Butchery &amp; Pantry</strong>. I am simply collating orders on behalf of our group — I do not process, prepare, or handle the meat. All payments and pickups are arranged directly between you and the butchery via WhatsApp.
         </p>
       </div>
 
       <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 28 }}>
         <div>
-          <div style={{ fontFamily: "'Barlow Condensed', sans-serif", color: G.red, letterSpacing: '.14em', textTransform: 'uppercase', fontSize: 12, marginBottom: 4 }}>Current Round · Slab Prices</d[...]
+          <div style={{ fontFamily: "'Barlow Condensed', sans-serif", color: G.red, letterSpacing: '.14em', textTransform: 'uppercase', fontSize: 12, marginBottom: 4 }}>Current Round · Slab Prices</div>
           <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: 'clamp(26px,5vw,42px)', fontWeight: 900 }}>Available Cuts</h1>
         </div>
         {cartCount > 0 && <Btn onClick={() => setPage('Order')}>🛒 View Cart ({cartCount})</Btn>}
@@ -218,12 +321,16 @@ function ShopPage({ products, setPage, cart, setCart }) {
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 18 }}>
         {products.map(p => (
-          <div key={p.id} style={{ background: G.card, border: `1px solid ${G.border}`, borderRadius: 10, overflow: 'hidden', transition: 'transform 0.18s, box-shadow 0.18s' }}
-            onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 8px 32px #0006'; }}
-            onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = ''; }}>
+          <div key={p.id}
+            style={{ background: G.card, border: `1px solid ${G.border}`, borderRadius: 10, overflow: 'hidden', transition: 'transform 0.18s, box-shadow 0.18s' }}
+            onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-3px)'; (e.currentTarget as HTMLDivElement).style.boxShadow = '0 8px 32px #0006'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.transform = ''; (e.currentTarget as HTMLDivElement).style.boxShadow = ''; }}>
             {p.image_url
               ? <img src={p.image_url} alt={p.name} style={{ width: '100%', height: 160, objectFit: 'cover', objectPosition: 'center' }} />
-              : <div style={{ background: p.isEnquiry ? 'linear-gradient(135deg, #1a1a2e, #0f0f1a)' : 'linear-gradient(135deg, #2a1a18, #1a1210)', height: 160, display: 'flex', alignItems: 'center', j[...]
+              : <div style={{
+                  background: p.isEnquiry ? 'linear-gradient(135deg, #1a1a2e, #0f0f1a)' : 'linear-gradient(135deg, #2a1a18, #1a1210)',
+                  height: 160, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 56,
+                }}>{p.emoji}</div>
             }
             <div style={{ padding: 18 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6, gap: 8 }}>
@@ -254,13 +361,20 @@ function ShopPage({ products, setPage, cart, setCart }) {
   );
 }
 
-function OrderPage({ roundOpen, cart, setCart }) {
+// ── OrderPage ─────────────────────────────────────────────────────────────────
+
+function OrderPage({ roundOpen, cart, setCart }: {
+  roundOpen: boolean;
+  cart: CartItem[];
+  setCart: React.Dispatch<React.SetStateAction<CartItem[]>>;
+}) {
   const [name, setName] = useState('');
   const [wa, setWa] = useState('');
-  const [submitted, setSubmitted] = useState(null);
+  const [submitted, setSubmitted] = useState<Order | null>(null);
 
-  const removeItem = cartKey => setCart(c => c.filter(x => x.cartKey !== cartKey));
-  const updatePackQty = (cartKey, delta) => {
+  const removeItem = (cartKey: string) => setCart(c => c.filter(x => x.cartKey !== cartKey));
+
+  const updatePackQty = (cartKey: string, delta: number) => {
     setCart(c => c.map(x => x.cartKey === cartKey
       ? { ...x, qty: Math.max(1, x.qty + delta), lineTotal: parseFloat((Math.max(1, x.qty + delta) * x.unitPrice).toFixed(2)) }
       : x));
@@ -270,16 +384,16 @@ function OrderPage({ roundOpen, cart, setCart }) {
 
   const submit = async () => {
     if (!name.trim() || !wa.trim() || cart.length === 0) return alert('Please fill in your name, WhatsApp number, and add at least one item.');
-    const order = { id: 'o' + Date.now(), name: name.trim(), wa: wa.trim(), items: cart, total, status: 'Pending', ts: Date.now() };
+    const order: Order = { id: 'o' + Date.now(), name: name.trim(), wa: wa.trim(), items: cart, total, status: 'Pending', ts: Date.now() };
     await supabase.from('moo_orders').insert([order]);
     setSubmitted(order);
     setCart([]);
   };
 
-  const formatItem = i => {
+  const formatItem = (i: CartItem) => {
     if (i.isEnquiry) return `${i.name} — Enquiry: ${i.enquiryNote}`;
     return i.sliceWeight
-      ? `${i.name} — ${i.pieces} piece(s) @ ${i.sliceWeight}g each (${i.totalKg.toFixed(3)}kg) = S$${i.lineTotal.toFixed(2)}`
+      ? `${i.name} — ${i.pieces} piece(s) @ ${i.sliceWeight}g each (${i.totalKg?.toFixed(3)}kg) = S$${i.lineTotal.toFixed(2)}`
       : `${i.name} x${i.qty} = S$${i.lineTotal.toFixed(2)}`;
   };
 
@@ -315,7 +429,7 @@ function OrderPage({ roundOpen, cart, setCart }) {
               {i.isEnquiry
                 ? <div style={{ color: G.muted, fontSize: 12, marginTop: 2 }}>Enquiry: {i.enquiryNote}</div>
                 : i.sliceWeight
-                  ? <div style={{ color: G.muted, fontSize: 12, marginTop: 2 }}>{i.pieces} pcs × {i.sliceWeight}g = {i.totalKg.toFixed(3)}kg</div>
+                  ? <div style={{ color: G.muted, fontSize: 12, marginTop: 2 }}>{i.pieces} pcs × {i.sliceWeight}g = {i.totalKg?.toFixed(3)}kg</div>
                   : <div style={{ color: G.muted, fontSize: 12, marginTop: 2 }}>Qty: {i.qty}</div>}
             </div>
           ))}
@@ -333,7 +447,8 @@ function OrderPage({ roundOpen, cart, setCart }) {
   return (
     <div style={{ maxWidth: 680, margin: '0 auto', padding: '32px 20px' }}>
       <div style={{ fontFamily: "'Barlow Condensed', sans-serif", color: G.red, letterSpacing: '.14em', textTransform: 'uppercase', fontSize: 12, marginBottom: 4 }}>Your Order</div>
-      <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: 36, fontWeight: 900, marginBottom: 24 }}>Review & Submit</h1>
+      <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: 36, fontWeight: 900, marginBottom: 24 }}>Review &amp; Submit</h1>
+
       <div style={{ background: G.card, border: `1px solid ${G.border}`, borderRadius: 8, padding: 20, marginBottom: 20 }}>
         <h3 style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: 14, letterSpacing: '.1em', textTransform: 'uppercase', color: G.muted, marginBottom: 14 }}>Your Details</h3>
         <div style={{ display: 'grid', gap: 12 }}>
@@ -344,6 +459,7 @@ function OrderPage({ roundOpen, cart, setCart }) {
           📲 After submitting, you'll be prompted to confirm your order via WhatsApp to <strong style={{ color: G.gold }}>+65 9662 5208</strong>. Pickup details will be arranged there.
         </div>
       </div>
+
       <div style={{ background: G.card, border: `1px solid ${G.border}`, borderRadius: 8, padding: 20, marginBottom: 20 }}>
         <h3 style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: 14, letterSpacing: '.1em', textTransform: 'uppercase', color: G.muted, marginBottom: 14 }}>Order Items</h3>
         {cart.length === 0
@@ -356,19 +472,19 @@ function OrderPage({ roundOpen, cart, setCart }) {
                   {item.isEnquiry ? (
                     <div style={{ fontSize: 12, color: G.muted }}>Enquiry: {item.enquiryNote}</div>
                   ) : item.sliceWeight ? (
-                    <div style={{ fontSize: 13, color: G.muted }}>{item.pieces} pcs × {item.sliceWeight}g = {item.totalKg.toFixed(3)}kg</div>
+                    <div style={{ fontSize: 13, color: G.muted }}>{item.pieces} pcs × {item.sliceWeight}g = {item.totalKg?.toFixed(3)}kg</div>
                   ) : (
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
-                      <button onClick={() => updatePackQty(item.cartKey, -1)} style={{ width: 26, height: 26, borderRadius: 4, background: G.surface, color: G.cream, fontSize: 16, border: `1px so[...]
+                      <button onClick={() => updatePackQty(item.cartKey, -1)} style={{ width: 26, height: 26, borderRadius: 4, background: G.surface, color: G.cream, fontSize: 16, border: `1px solid ${G.border}`, cursor: 'pointer' }}>−</button>
                       <span style={{ fontWeight: 700 }}>{item.qty}</span>
-                      <button onClick={() => updatePackQty(item.cartKey, 1)} style={{ width: 26, height: 26, borderRadius: 4, background: G.surface, color: G.cream, fontSize: 16, border: `1px sol[...]
+                      <button onClick={() => updatePackQty(item.cartKey, 1)} style={{ width: 26, height: 26, borderRadius: 4, background: G.surface, color: G.cream, fontSize: 16, border: `1px solid ${G.border}`, cursor: 'pointer' }}>+</button>
                       <span style={{ fontSize: 12, color: G.muted }}>× S${item.unitPrice}/pack</span>
                     </div>
                   )}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginLeft: 12 }}>
                   <span style={{ fontWeight: 700, color: G.red }}>{item.isEnquiry ? 'TBD' : `S$${item.lineTotal.toFixed(2)}`}</span>
-                  <button onClick={() => removeItem(item.cartKey)} style={{ background: 'transparent', color: G.muted, fontSize: 18, padding: '0 4px', border: 'none' }}>×</button>
+                  <button onClick={() => removeItem(item.cartKey)} style={{ background: 'transparent', color: G.muted, fontSize: 18, padding: '0 4px', border: 'none', cursor: 'pointer' }}>×</button>
                 </div>
               </div>
             </div>
@@ -379,17 +495,25 @@ function OrderPage({ roundOpen, cart, setCart }) {
           </div>
         )}
       </div>
+
       <Btn onClick={submit} disabled={cart.length === 0} style={{ width: '100%', fontSize: 15 }}>Submit Order →</Btn>
     </div>
   );
 }
 
-function AdminPage({ products, setProducts, roundOpen, setRoundOpen }) {
+// ── AdminPage ─────────────────────────────────────────────────────────────────
+
+function AdminPage({ products, setProducts, roundOpen, setRoundOpen }: {
+  products: Product[];
+  setProducts: React.Dispatch<React.SetStateAction<Product[]>>;
+  roundOpen: boolean;
+  setRoundOpen: (v: boolean) => void;
+}) {
   const [authed, setAuthed] = useState(false);
   const [pass, setPass] = useState('');
   const [tab, setTab] = useState('orders');
-  const [orders, setOrders] = useState([]);
-  const [editProd, setEditProd] = useState(null);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [editProd, setEditProd] = useState<Partial<Product> | null>(null);
 
   useEffect(() => {
     if (authed) {
@@ -399,56 +523,79 @@ function AdminPage({ products, setProducts, roundOpen, setRoundOpen }) {
     }
   }, [authed]);
 
-  const loadOrders = async () => { const { data } = await supabase.from('moo_orders').select('*'); setOrders(data || []); };
-  const saveOrders = async o => { setOrders(o); await supabase.from('moo_orders').upsert(o); };
-  const updateStatus = (id, status) => saveOrders(orders.map(o => o.id === id ? { ...o, status } : o));
-  const deleteOrder = id => saveOrders(orders.filter(o => o.id !== id));
+  const loadOrders = async () => {
+    const { data } = await supabase.from('moo_orders').select('*');
+    setOrders((data as Order[]) || []);
+  };
 
-  const saveProd = async p => {
-    // Ensure product has id for upsert; if new, let Supabase generate uuid server-side if using default
+  const saveOrders = async (o: Order[]) => {
+    setOrders(o);
+    await supabase.from('moo_orders').upsert(o);
+  };
+
+  const updateStatus = (id: string, status: string) => saveOrders(orders.map(o => o.id === id ? { ...o, status } : o));
+  const deleteOrder = (id: string) => saveOrders(orders.filter(o => o.id !== id));
+
+  const saveProd = async (p: Partial<Product>) => {
     const toSave = { ...p };
-    // Upsert single product
-    const { data, error } = await supabase.from('products').upsert(toSave).select();
-    if (error) {
-      console.error('Failed to save product', error);
-      return;
-    }
-    // Refresh products list
+    const { error } = await supabase.from('products').upsert(toSave).select();
+    if (error) { console.error('Failed to save product', error); return; }
     const { data: all, error: allErr } = await supabase.from('products').select('*').order('created_at', { ascending: false });
-    if (!allErr && all) setProducts(all);
+    if (!allErr && all) setProducts(all as Product[]);
     setEditProd(null);
   };
 
-  const deleteProd = async id => {
+  const deleteProd = async (id: string) => {
     const { error } = await supabase.from('products').delete().eq('id', id);
     if (error) console.error('Failed to delete product', error);
     const { data: all, error: allErr } = await supabase.from('products').select('*').order('created_at', { ascending: false });
-    if (!allErr && all) setProducts(all);
+    if (!allErr && all) setProducts(all as Product[]);
   };
 
-  const toggleRound = async () => { const n = !roundOpen; setRoundOpen(n); await supabase.from('settings').upsert({ key: 'roundOpen', value: JSON.stringify(n) }); };
+  const toggleRound = async () => {
+    const n = !roundOpen;
+    setRoundOpen(n);
+    await supabase.from('settings').upsert({ key: 'roundOpen', value: JSON.stringify(n) });
+  };
 
   const exportCSV = () => {
-    const rows = [['Name', 'WhatsApp', 'Items', 'Total', 'Status', 'Date'],
-      ...orders.map(o => [o.name, o.wa, o.items.map(i => i.isEnquiry ? `${i.name}: ${i.enquiryNote}` : i.sliceWeight ? `${i.name} ${i.pieces}pc×${i.sliceWeight}g` : `${i.name} x${i.qty}`).join('; '),[...]
+    const rows: string[][] = [
+      ['Name', 'WhatsApp', 'Items', 'Total', 'Status', 'Date'],
+      ...orders.map(o => [
+        o.name, o.wa,
+        o.items.map(i => i.isEnquiry ? `${i.name}: ${i.enquiryNote}` : i.sliceWeight ? `${i.name} ${i.pieces}pc×${i.sliceWeight}g` : `${i.name} x${i.qty}`).join('; '),
+        `S$${o.total.toFixed(2)}`, o.status, new Date(o.ts).toLocaleString(),
+      ]),
+    ];
     const csv = rows.map(r => r.map(c => `"${c}"`).join(',')).join('\n');
-    const a = document.createElement('a'); a.href = 'data:text/csv,' + encodeURIComponent(csv); a.download = 'orders.csv'; a.click();
+    const a = document.createElement('a');
+    a.href = 'data:text/csv,' + encodeURIComponent(csv);
+    a.download = 'orders.csv';
+    a.click();
   };
 
-  const statusColor = s => ({ Pending: G.amber, Paid: G.green, Collected: G.muted, Filled: G.green }[s] || G.muted);
-  const tabStyle = t => ({ background: tab === t ? G.red : 'transparent', color: tab === t ? '#fff' : G.muted, padding: '8px 16px', fontSize: 13, borderRadius: 5, fontFamily: "'Barlow Condensed', sans[...]
+  const statusColors: Record<string, string> = { Pending: G.amber, Paid: G.green, Collected: G.muted, Filled: G.green };
+  const statusColor = (s: string) => statusColors[s] || G.muted;
 
-  const ProdForm = ({ p, onSave, onCancel }) => {
-    const [f, setF] = useState(p || { name: '', description: '', emoji: '🥩', unitPrice: 0, unit: 'kg', image_url: '', active: true });
+  const tabStyle = (t: string): React.CSSProperties => ({
+    background: tab === t ? G.red : 'transparent',
+    color: tab === t ? '#fff' : G.muted,
+    padding: '8px 16px', fontSize: 13, borderRadius: 5,
+    fontFamily: "'Barlow Condensed', sans-serif",
+    letterSpacing: '.08em', fontWeight: 600, border: 'none', cursor: 'pointer',
+  });
+
+  const ProdForm = ({ p, onSave, onCancel }: { p: Partial<Product>; onSave: (f: Partial<Product>) => void; onCancel: () => void }) => {
+    const [f, setF] = useState<Partial<Product>>(p || { name: '', description: '', emoji: '🥩', unitPrice: 0, unit: 'kg', image_url: '', active: true });
     return (
       <div style={{ display: 'grid', gap: 10 }}>
-        <input placeholder='Product Name' value={f.name} onChange={e => setF({ ...f, name: e.target.value })} />
-        <input placeholder='Description' value={f.description} onChange={e => setF({ ...f, description: e.target.value })} />
-        <input placeholder='Emoji' value={f.emoji} onChange={e => setF({ ...f, emoji: e.target.value })} />
-        <input placeholder='Image URL (public)' value={f.image_url} onChange={e => setF({ ...f, image_url: e.target.value })} />
+        <input placeholder='Product Name' value={f.name || ''} onChange={e => setF({ ...f, name: e.target.value })} />
+        <input placeholder='Description' value={f.description || ''} onChange={e => setF({ ...f, description: e.target.value })} />
+        <input placeholder='Emoji' value={f.emoji || ''} onChange={e => setF({ ...f, emoji: e.target.value })} />
+        <input placeholder='Image URL (public)' value={f.image_url || ''} onChange={e => setF({ ...f, image_url: e.target.value })} />
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-          <input placeholder='Price (slab/unit)' type='number' value={f.unitPrice} onChange={e => setF({ ...f, unitPrice: parseFloat(e.target.value) || 0 })} />
-          <select value={f.unit} onChange={e => setF({ ...f, unit: e.target.value })}>
+          <input placeholder='Price (slab/unit)' type='number' value={f.unitPrice ?? 0} onChange={e => setF({ ...f, unitPrice: parseFloat(e.target.value) || 0 })} />
+          <select value={f.unit || 'kg'} onChange={e => setF({ ...f, unit: e.target.value })}>
             <option value='kg'>per kg</option>
             <option value='pack'>per pack</option>
             <option value='enquiry'>enquiry</option>
@@ -473,7 +620,9 @@ function AdminPage({ products, setProducts, roundOpen, setRoundOpen }) {
   if (!authed) return (
     <div style={{ maxWidth: 400, margin: '100px auto', padding: 20 }}>
       <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 30, marginBottom: 20, textAlign: 'center' }}>Admin</h2>
-      <input type='password' placeholder='Password' value={pass} onChange={e => setPass(e.target.value)} onKeyDown={e => e.key === 'Enter' && (pass === ADMIN_PASS ? setAuthed(true) : alert('Wrong[...]
+      <input type='password' placeholder='Password' value={pass} onChange={e => setPass(e.target.value)}
+        onKeyDown={e => { if (e.key === 'Enter') { pass === ADMIN_PASS ? setAuthed(true) : alert('Wrong password'); } }}
+        style={{ marginBottom: 12 }} />
       <Btn onClick={() => pass === ADMIN_PASS ? setAuthed(true) : alert('Wrong password')} style={{ width: '100%' }}>Login</Btn>
     </div>
   );
@@ -489,6 +638,7 @@ function AdminPage({ products, setProducts, roundOpen, setRoundOpen }) {
           <Btn onClick={exportCSV} variant='ghost' size='sm'>↓ CSV</Btn>
         </div>
       </div>
+
       <div style={{ display: 'flex', gap: 6, marginBottom: 24, background: G.surface, padding: 6, borderRadius: 8, width: 'fit-content' }}>
         {['orders', 'products'].map(t => <button key={t} onClick={() => setTab(t)} style={tabStyle(t)}>{t.charAt(0).toUpperCase() + t.slice(1)}</button>)}
       </div>
@@ -504,13 +654,17 @@ function AdminPage({ products, setProducts, roundOpen, setRoundOpen }) {
                   <tr key={o.id}>
                     <td style={{ fontWeight: 600 }}>{o.name}</td>
                     <td style={{ color: G.muted }}>{o.wa}</td>
-                    <td style={{ fontSize: 12 }}>{o.items.map((i, idx) => <div key={idx}>{i.emoji} {i.name}{i.isEnquiry ? ` · ${i.enquiryNote}` : i.sliceWeight ? ` · ${i.pieces}pc×${i.sliceWeight}g[...]
+                    <td style={{ fontSize: 12 }}>
+                      {o.items.map((i, idx) => (
+                        <div key={idx}>{i.emoji} {i.name}{i.isEnquiry ? ` · ${i.enquiryNote}` : i.sliceWeight ? ` · ${i.pieces}pc×${i.sliceWeight}g` : ` x${i.qty}`}</div>
+                      ))}
+                    </td>
                     <td style={{ fontWeight: 700, color: G.red }}>S${o.total.toFixed(2)}</td>
                     <td><Badge color={statusColor(o.status)}>{o.status}</Badge></td>
                     <td style={{ color: G.muted, fontSize: 12 }}>{new Date(o.ts).toLocaleDateString()}</td>
                     <td>
                       <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-                        {['Pending', 'Paid', 'Collected'].filter(s => s !== o.status).map(s => (
+                        {(['Pending', 'Paid', 'Collected'] as string[]).filter(s => s !== o.status).map(s => (
                           <Btn key={s} onClick={() => updateStatus(o.id, s)} variant='ghost' size='sm'>{s}</Btn>
                         ))}
                         <Btn onClick={() => deleteOrder(o.id)} variant='danger' size='sm'>✕</Btn>
@@ -529,12 +683,14 @@ function AdminPage({ products, setProducts, roundOpen, setRoundOpen }) {
             <h3 style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: 14, letterSpacing: '.1em', textTransform: 'uppercase', color: G.muted }}>Products</h3>
             <Btn size='sm' onClick={() => setEditProd({ name: '', description: '', emoji: '🥩', unitPrice: 0, unit: 'kg', image_url: '', active: true })}>+ Add Product</Btn>
           </div>
+
           {editProd && !editProd.id && (
             <div style={{ background: G.card, border: `1px solid ${G.red}44`, borderRadius: 8, padding: 20, marginBottom: 16 }}>
               <h4 style={{ marginBottom: 14, fontFamily: "'Barlow Condensed', sans-serif", letterSpacing: '.08em', textTransform: 'uppercase', color: G.muted, fontSize: 12 }}>New Product</h4>
               <ProdForm p={editProd} onSave={saveProd} onCancel={() => setEditProd(null)} />
             </div>
           )}
+
           {products.map(p => (
             <div key={p.id} style={{ background: G.card, border: `1px solid ${G.border}`, borderRadius: 8, padding: 16, marginBottom: 10 }}>
               {editProd?.id === p.id
@@ -563,11 +719,13 @@ function AdminPage({ products, setProducts, roundOpen, setRoundOpen }) {
   );
 }
 
+// ── App ───────────────────────────────────────────────────────────────────────
+
 export default function App() {
   const [page, setPage] = useState('Shop');
-  const [products, setProducts] = useState([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [roundOpen, setRoundOpen] = useState(true);
-  const [cart, setCart] = useState([]);
+  const [cart, setCart] = useState<CartItem[]>([]);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
@@ -575,7 +733,7 @@ export default function App() {
       try {
         const { data: pData, error: pError } = await supabase.from('products').select('*').order('created_at', { ascending: false });
         const { data: rData, error: rError } = await supabase.from('settings').select('value').eq('key', 'roundOpen');
-        if (!pError && pData) setProducts(pData.filter(p => p.active !== false));
+        if (!pError && pData) setProducts((pData as Product[]).filter(p => p.active !== false));
         if (!rError && rData && rData[0]) setRoundOpen(JSON.parse(rData[0].value));
       } catch (err) {
         console.error('Error loading data:', err);
@@ -584,7 +742,11 @@ export default function App() {
     })();
   }, []);
 
-  if (!loaded) return <div style={{ background: G.bg, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: G.muted, fontFamily: "'Barlow Condensed', sans-se[...]
+  if (!loaded) return (
+    <div style={{ background: G.bg, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: G.muted, fontFamily: "'Barlow Condensed', sans-serif", letterSpacing: '.1em' }}>
+      Loading…
+    </div>
+  );
 
   return (
     <>
@@ -595,7 +757,8 @@ export default function App() {
         {page === 'Order' && <OrderPage roundOpen={roundOpen} cart={cart} setCart={setCart} />}
         {page === 'Admin' && <AdminPage products={products} setProducts={setProducts} roundOpen={roundOpen} setRoundOpen={setRoundOpen} />}
         <footer style={{ textAlign: 'center', padding: '40px 20px 24px', color: G.muted, fontFamily: "'Barlow Condensed', sans-serif", fontSize: 11, letterSpacing: '.12em' }}>
-          MOO GROUP BUY · MORNINGTON BUTCHERY & PANTRY · SINGAPORE · <a href={`https://wa.me/${OWNER_WA}`} target='_blank' rel='noreferrer' style={{ color: G.gold, textDecoration: 'none' }}>+6[...]
+          MOO GROUP BUY · MORNINGTON BUTCHERY &amp; PANTRY · SINGAPORE ·{' '}
+          <a href={`https://wa.me/${OWNER_WA}`} target='_blank' rel='noreferrer' style={{ color: G.gold, textDecoration: 'none' }}>+65 9662 5208</a>
         </footer>
       </div>
     </>
