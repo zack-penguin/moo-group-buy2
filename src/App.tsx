@@ -14,10 +14,10 @@ const G = {
   green: '#27ae60', amber: '#e67e22', gold: '#c9a84c',
 };
 
-const css = `@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Barlow+Condensed:wght@400;600;700&family=Barlow:wght@400;500&display=swap'); *, *::before, *::after { box-sizing: border-box; } body { margin: 0; font-family: 'Barlow', sans-serif; background: ${G.bg}; color: ${G.cream}; }`;
+const css = `@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Barlow+Condensed:wght@400;600;700&family=Barlow:wght@400;500&display=swap'); *, *::before, *::af[...]
 
 const Btn = ({ children, onClick, variant = 'primary', size = 'md', disabled, style = {} }) => {
-  const base = { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: size === 'sm' ? '6px 14px' : '11px 22px', fontSize: size === 'sm' ? 13 : 14, fontWeight: 600, borderRadius: 6, border: 'none', cursor: 'pointer', transition: 'all 0.2s' };
+  const base = { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: size === 'sm' ? '6px 14px' : '11px 22px', fontSize: size === 'sm' ? 13 : 14, fontWeight: 600, [...]
   const variants = {
     primary: { background: G.red, color: '#fff' },
     ghost: { background: 'transparent', color: G.cream, border: `1px solid ${G.border}` },
@@ -29,12 +29,12 @@ const Btn = ({ children, onClick, variant = 'primary', size = 'md', disabled, st
 };
 
 const Badge = ({ children, color = G.muted }) => (
-  <span style={{ display: 'inline-block', padding: '2px 10px', borderRadius: 20, fontSize: 11, fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', background: `${color}22`, color }}>{children}</span>
+  <span style={{ display: 'inline-block', padding: '2px 10px', borderRadius: 20, fontSize: 11, fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, letterSpacing: '.08em', textTransform: 'up[...]
 );
 
 const Modal = ({ children, onClose }) => (
   <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: '#000c', zIndex: 999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-    <div onClick={e => e.stopPropagation()} style={{ background: G.card, border: `1px solid ${G.border}`, borderRadius: 10, padding: 28, maxWidth: 440, width: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
+    <div onClick={e => e.stopPropagation()} style={{ background: G.card, border: `1px solid ${G.border}`, borderRadius: 10, padding: 28, maxWidth: 440, width: '100%', maxHeight: '90vh', overflowY: 'au[...]
       {children}
     </div>
   </div>
@@ -55,9 +55,9 @@ function Nav({ page, setPage, roundOpen }) {
           <Badge color={roundOpen ? G.green : G.red}>{roundOpen ? '● OPEN' : '● CLOSED'}</Badge>
           <div style={{ display: 'flex', gap: 4, marginLeft: 10 }}>
             {['Shop', 'Order'].map(n => (
-              <button key={n} onClick={() => setPage(n)} style={{ background: page === n ? G.red : 'transparent', color: page === n ? '#fff' : G.muted, padding: '5px 12px', fontSize: 12, borderRadius: 5, border: 'none', cursor: 'pointer' }}>{n}</button>
+              <button key={n} onClick={() => setPage(n)} style={{ background: page === n ? G.red : 'transparent', color: page === n ? '#fff' : G.muted, padding: '5px 12px', fontSize: 12, borderRadius:[...]
             ))}
-            <button onClick={() => setPage('Admin')} style={{ background: 'transparent', color: G.bg, padding: '5px 12px', fontSize: 12, borderRadius: 5, border: 'none', userSelect: 'none' }}>⚙️</button>
+            <button onClick={() => setPage('Admin')} style={{ background: 'transparent', color: G.bg, padding: '5px 12px', fontSize: 12, borderRadius: 5, border: 'none', userSelect: 'none' }}>⚙️</[...]
           </div>
         </div>
       </div>
@@ -202,15 +202,15 @@ function ShopPage({ products, setPage, cart, setCart }) {
       )}
 
       <div className='notice-bar'>
-        <div style={{ fontFamily: "'Barlow Condensed', sans-serif", color: G.gold, fontSize: 13, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: 6 }}>ℹ️ Important — Please Read</div>
+        <div style={{ fontFamily: "'Barlow Condensed', sans-serif", color: G.gold, fontSize: 13, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: 6 }}>ℹ️ Important — Please Read<[...]
         <p style={{ fontSize: 13, lineHeight: 1.7, color: G.cream }}>
-          All beef is sourced directly from <strong style={{ color: G.gold }}>Mornington Butchery & Pantry</strong>. I am simply collating orders on behalf of our group — I do not process, prepare, or handle any meat. All beef cuts are subject to stock availability.
+          All beef is sourced directly from <strong style={{ color: G.gold }}>Mornington Butchery & Pantry</strong>. I am simply collating orders on behalf of our group — I do not process, prepare, [...]
         </p>
       </div>
 
       <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 28 }}>
         <div>
-          <div style={{ fontFamily: "'Barlow Condensed', sans-serif", color: G.red, letterSpacing: '.14em', textTransform: 'uppercase', fontSize: 12, marginBottom: 4 }}>Current Round · Slab Prices</div>
+          <div style={{ fontFamily: "'Barlow Condensed', sans-serif", color: G.red, letterSpacing: '.14em', textTransform: 'uppercase', fontSize: 12, marginBottom: 4 }}>Current Round · Slab Prices</d[...]
           <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: 'clamp(26px,5vw,42px)', fontWeight: 900 }}>Available Cuts</h1>
         </div>
         {cartCount > 0 && <Btn onClick={() => setPage('Order')}>🛒 View Cart ({cartCount})</Btn>}
@@ -223,12 +223,11 @@ function ShopPage({ products, setPage, cart, setCart }) {
             onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = ''; }}>
             {p.image_url
               ? <img src={p.image_url} alt={p.name} style={{ width: '100%', height: 160, objectFit: 'cover', objectPosition: 'center' }} />
-              : <div style={{ background: p.isEnquiry ? 'linear-gradient(135deg, #1a1a2e, #0f0f1a)' : 'linear-gradient(135deg, #2a1a18, #1a1210)', height: 160, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 40 }}>{p.emoji || '🥩'}</div>
+              : <div style={{ background: p.isEnquiry ? 'linear-gradient(135deg, #1a1a2e, #0f0f1a)' : 'linear-gradient(135deg, #2a1a18, #1a1210)', height: 160, display: 'flex', alignItems: 'center', j[...]
             }
             <div style={{ padding: 18 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6, gap: 8 }}>
                 <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: 15, fontWeight: 700, lineHeight: 1.3 }}>{p.name}</h3>
-                {!p.isEnquiry && <Badge color={p.available ? G.green : G.red}>{p.available ? 'In' : 'Out'}</Badge>}
               </div>
               <p style={{ fontSize: 12, color: G.muted, lineHeight: 1.5, marginBottom: 12 }}>{p.description}</p>
               {p.checkAvailability && (
@@ -243,10 +242,9 @@ function ShopPage({ products, setPage, cart, setCart }) {
               )}
               <Btn
                 onClick={() => p.isEnquiry ? openModal(p) : (isKg(p) ? openModal(p) : addPackToCart(p))}
-                disabled={!p.available && !p.isEnquiry}
                 variant={p.isEnquiry ? 'gold' : 'primary'}
                 style={{ width: '100%' }}>
-                {p.isEnquiry ? '✉️ Submit Enquiry' : (p.available ? (isKg(p) ? 'Add to Cart' : 'Add to Order') : 'Unavailable')}
+                {p.isEnquiry ? '✉️ Submit Enquiry' : (isKg(p) ? 'Add to Cart' : 'Add to Order')}
               </Btn>
             </div>
           </div>
@@ -361,9 +359,9 @@ function OrderPage({ roundOpen, cart, setCart }) {
                     <div style={{ fontSize: 13, color: G.muted }}>{item.pieces} pcs × {item.sliceWeight}g = {item.totalKg.toFixed(3)}kg</div>
                   ) : (
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
-                      <button onClick={() => updatePackQty(item.cartKey, -1)} style={{ width: 26, height: 26, borderRadius: 4, background: G.surface, color: G.cream, fontSize: 16, border: `1px solid ${G.border}` }}>−</button>
+                      <button onClick={() => updatePackQty(item.cartKey, -1)} style={{ width: 26, height: 26, borderRadius: 4, background: G.surface, color: G.cream, fontSize: 16, border: `1px so[...]
                       <span style={{ fontWeight: 700 }}>{item.qty}</span>
-                      <button onClick={() => updatePackQty(item.cartKey, 1)} style={{ width: 26, height: 26, borderRadius: 4, background: G.surface, color: G.cream, fontSize: 16, border: `1px solid ${G.border}` }}>+</button>
+                      <button onClick={() => updatePackQty(item.cartKey, 1)} style={{ width: 26, height: 26, borderRadius: 4, background: G.surface, color: G.cream, fontSize: 16, border: `1px sol[...]
                       <span style={{ fontSize: 12, color: G.muted }}>× S${item.unitPrice}/pack</span>
                     </div>
                   )}
@@ -432,16 +430,16 @@ function AdminPage({ products, setProducts, roundOpen, setRoundOpen }) {
 
   const exportCSV = () => {
     const rows = [['Name', 'WhatsApp', 'Items', 'Total', 'Status', 'Date'],
-      ...orders.map(o => [o.name, o.wa, o.items.map(i => i.isEnquiry ? `${i.name}: ${i.enquiryNote}` : i.sliceWeight ? `${i.name} ${i.pieces}pc×${i.sliceWeight}g` : `${i.name} x${i.qty}`).join('; '), o.total.toFixed(2), o.status, new Date(o.ts).toLocaleDateString()])];
+      ...orders.map(o => [o.name, o.wa, o.items.map(i => i.isEnquiry ? `${i.name}: ${i.enquiryNote}` : i.sliceWeight ? `${i.name} ${i.pieces}pc×${i.sliceWeight}g` : `${i.name} x${i.qty}`).join('; '),[...]
     const csv = rows.map(r => r.map(c => `"${c}"`).join(',')).join('\n');
     const a = document.createElement('a'); a.href = 'data:text/csv,' + encodeURIComponent(csv); a.download = 'orders.csv'; a.click();
   };
 
   const statusColor = s => ({ Pending: G.amber, Paid: G.green, Collected: G.muted, Filled: G.green }[s] || G.muted);
-  const tabStyle = t => ({ background: tab === t ? G.red : 'transparent', color: tab === t ? '#fff' : G.muted, padding: '8px 16px', fontSize: 13, borderRadius: 5, fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, cursor: 'pointer', border: 'none' });
+  const tabStyle = t => ({ background: tab === t ? G.red : 'transparent', color: tab === t ? '#fff' : G.muted, padding: '8px 16px', fontSize: 13, borderRadius: 5, fontFamily: "'Barlow Condensed', sans[...]
 
   const ProdForm = ({ p, onSave, onCancel }) => {
-    const [f, setF] = useState(p || { name: '', description: '', emoji: '🥩', unitPrice: 0, unit: 'kg', available: true, image_url: '' });
+    const [f, setF] = useState(p || { name: '', description: '', emoji: '🥩', unitPrice: 0, unit: 'kg', image_url: '', active: true });
     return (
       <div style={{ display: 'grid', gap: 10 }}>
         <input placeholder='Product Name' value={f.name} onChange={e => setF({ ...f, name: e.target.value })} />
@@ -457,8 +455,8 @@ function AdminPage({ products, setProducts, roundOpen, setRoundOpen }) {
           </select>
         </div>
         <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13 }}>
-          <input type='checkbox' checked={f.available} onChange={e => setF({ ...f, available: e.target.checked })} style={{ width: 'auto' }} />
-          Available
+          <input type='checkbox' checked={!!f.active} onChange={e => setF({ ...f, active: e.target.checked })} style={{ width: 'auto' }} />
+          Active (Show on website)
         </label>
         <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13 }}>
           <input type='checkbox' checked={!!f.checkAvailability} onChange={e => setF({ ...f, checkAvailability: e.target.checked })} style={{ width: 'auto' }} />
@@ -475,7 +473,7 @@ function AdminPage({ products, setProducts, roundOpen, setRoundOpen }) {
   if (!authed) return (
     <div style={{ maxWidth: 400, margin: '100px auto', padding: 20 }}>
       <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 30, marginBottom: 20, textAlign: 'center' }}>Admin</h2>
-      <input type='password' placeholder='Password' value={pass} onChange={e => setPass(e.target.value)} onKeyDown={e => e.key === 'Enter' && (pass === ADMIN_PASS ? setAuthed(true) : alert('Wrong password'))} />
+      <input type='password' placeholder='Password' value={pass} onChange={e => setPass(e.target.value)} onKeyDown={e => e.key === 'Enter' && (pass === ADMIN_PASS ? setAuthed(true) : alert('Wrong[...]
       <Btn onClick={() => pass === ADMIN_PASS ? setAuthed(true) : alert('Wrong password')} style={{ width: '100%' }}>Login</Btn>
     </div>
   );
@@ -506,7 +504,7 @@ function AdminPage({ products, setProducts, roundOpen, setRoundOpen }) {
                   <tr key={o.id}>
                     <td style={{ fontWeight: 600 }}>{o.name}</td>
                     <td style={{ color: G.muted }}>{o.wa}</td>
-                    <td style={{ fontSize: 12 }}>{o.items.map((i, idx) => <div key={idx}>{i.emoji} {i.name}{i.isEnquiry ? ` · ${i.enquiryNote}` : i.sliceWeight ? ` · ${i.pieces}pc×${i.sliceWeight}g` : ` x${i.qty}`}</div>)}</td>
+                    <td style={{ fontSize: 12 }}>{o.items.map((i, idx) => <div key={idx}>{i.emoji} {i.name}{i.isEnquiry ? ` · ${i.enquiryNote}` : i.sliceWeight ? ` · ${i.pieces}pc×${i.sliceWeight}g[...]
                     <td style={{ fontWeight: 700, color: G.red }}>S${o.total.toFixed(2)}</td>
                     <td><Badge color={statusColor(o.status)}>{o.status}</Badge></td>
                     <td style={{ color: G.muted, fontSize: 12 }}>{new Date(o.ts).toLocaleDateString()}</td>
@@ -529,7 +527,7 @@ function AdminPage({ products, setProducts, roundOpen, setRoundOpen }) {
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
             <h3 style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: 14, letterSpacing: '.1em', textTransform: 'uppercase', color: G.muted }}>Products</h3>
-            <Btn size='sm' onClick={() => setEditProd({ name: '', description: '', emoji: '🥩', unitPrice: 0, unit: 'kg', available: true, image_url: '' })}>+ Add Product</Btn>
+            <Btn size='sm' onClick={() => setEditProd({ name: '', description: '', emoji: '🥩', unitPrice: 0, unit: 'kg', image_url: '', active: true })}>+ Add Product</Btn>
           </div>
           {editProd && !editProd.id && (
             <div style={{ background: G.card, border: `1px solid ${G.red}44`, borderRadius: 8, padding: 20, marginBottom: 16 }}>
@@ -549,7 +547,7 @@ function AdminPage({ products, setProducts, roundOpen, setRoundOpen }) {
                         <div style={{ fontWeight: 700 }}>{p.name}</div>
                         <div style={{ fontSize: 12, color: G.muted }}>{p.isEnquiry ? 'Enquiry' : `S$${p.unitPrice}/${p.unit}`}</div>
                       </div>
-                      <Badge color={p.available ? G.green : G.red}>{p.available ? 'Available' : 'Unavailable'}</Badge>
+                      <Badge color={p.active ? G.green : G.red}>{p.active ? 'Active' : 'Hidden'}</Badge>
                     </div>
                     <div style={{ display: 'flex', gap: 8 }}>
                       <Btn size='sm' variant='ghost' onClick={() => setEditProd(p)}>Edit</Btn>
@@ -577,7 +575,7 @@ export default function App() {
       try {
         const { data: pData, error: pError } = await supabase.from('products').select('*').order('created_at', { ascending: false });
         const { data: rData, error: rError } = await supabase.from('settings').select('value').eq('key', 'roundOpen');
-        if (!pError && pData) setProducts(pData);
+        if (!pError && pData) setProducts(pData.filter(p => p.active !== false));
         if (!rError && rData && rData[0]) setRoundOpen(JSON.parse(rData[0].value));
       } catch (err) {
         console.error('Error loading data:', err);
@@ -586,7 +584,7 @@ export default function App() {
     })();
   }, []);
 
-  if (!loaded) return <div style={{ background: G.bg, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: G.muted, fontFamily: "'Barlow Condensed', sans-serif" }}>Loading...</div>;
+  if (!loaded) return <div style={{ background: G.bg, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: G.muted, fontFamily: "'Barlow Condensed', sans-se[...]
 
   return (
     <>
@@ -597,7 +595,7 @@ export default function App() {
         {page === 'Order' && <OrderPage roundOpen={roundOpen} cart={cart} setCart={setCart} />}
         {page === 'Admin' && <AdminPage products={products} setProducts={setProducts} roundOpen={roundOpen} setRoundOpen={setRoundOpen} />}
         <footer style={{ textAlign: 'center', padding: '40px 20px 24px', color: G.muted, fontFamily: "'Barlow Condensed', sans-serif", fontSize: 11, letterSpacing: '.12em' }}>
-          MOO GROUP BUY · MORNINGTON BUTCHERY & PANTRY · SINGAPORE · <a href={`https://wa.me/${OWNER_WA}`} target='_blank' rel='noreferrer' style={{ color: G.gold, textDecoration: 'none' }}>+65 9662 5208</a>
+          MOO GROUP BUY · MORNINGTON BUTCHERY & PANTRY · SINGAPORE · <a href={`https://wa.me/${OWNER_WA}`} target='_blank' rel='noreferrer' style={{ color: G.gold, textDecoration: 'none' }}>+6[...]
         </footer>
       </div>
     </>
