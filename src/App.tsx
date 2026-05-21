@@ -541,11 +541,7 @@ function AdminPage({ products, setProducts, roundOpen, setRoundOpen }: {
       const { data: all, error: allErr } = await supabase.from('products').select('*').order('created_at', { ascending: false });
       if (allErr) throw allErr;
       
-      const productsWithDefaults = (all as Product[]).map(p => ({
-        ...p,
-        unit: p.unit || 'kg',
-      }));
-      setProducts(productsWithDefaults.filter(x => x.active !== false));
+      setProducts((all as Product[]).filter(x => x.active !== false));
       setSaveStatus({ type: 'success', msg: `✓ ${p.name} saved successfully` });
       setEditProd(null);
       
@@ -566,11 +562,7 @@ function AdminPage({ products, setProducts, roundOpen, setRoundOpen }: {
       const { data: all, error: allErr } = await supabase.from('products').select('*').order('created_at', { ascending: false });
       if (allErr) throw allErr;
       
-      const productsWithDefaults = (all as Product[]).map(p => ({
-        ...p,
-        unit: p.unit || 'kg',
-      }));
-      setProducts(productsWithDefaults.filter(x => x.active !== false));
+      setProducts((all as Product[]).filter(x => x.active !== false));
       setSaveStatus({ type: 'success', msg: '✓ Product deleted' });
       setTimeout(() => setSaveStatus(null), 2500);
     } catch (err) {
@@ -713,7 +705,7 @@ function AdminPage({ products, setProducts, roundOpen, setRoundOpen }: {
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
             <h3 style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: 14, letterSpacing: '.1em', textTransform: 'uppercase', color: G.muted }}>Products</h3>
-            <Btn size='sm' onClick={() => setEditProd({ id: '', name: '', description: '', emoji: '🥩', unitPrice: 0, unit: 'kg', image_url: '', active: true })}>+ Add Product</Btn>
+            <Btn size='sm' onClick={() => setEditProd({ id: '', name: '', description: '', emoji: '🥩', price: 0, unit: 'kg', image_url: '', active: true })}>+ Add Product</Btn>
           </div>
           {editProd && !editProd.id && (
             <div style={{ background: G.card, border: `1px solid ${G.red}44`, borderRadius: 8, padding: 20, marginBottom: 16 }}>
@@ -765,12 +757,7 @@ export default function App() {
         const { data: rData, error: rError } = await supabase.from('settings').select('value').eq('key', 'roundOpen');
         
         if (!pError && pData) {
-          // Ensure all products have a unit type (default to 'kg')
-          const productsWithDefaults = (pData as Product[]).map(p => ({
-            ...p,
-            unit: p.unit || 'kg',
-          }));
-          setProducts(productsWithDefaults.filter(p => p.active !== false));
+          setProducts((pData as Product[]).filter(p => p.active !== false));
         }
         if (!rError && rData && rData[0]) setRoundOpen(JSON.parse(rData[0].value));
       } catch (err) {
