@@ -516,7 +516,24 @@ function AdminPage({ products, setProducts, roundOpen, setRoundOpen }: {
   const saveProd = async (p: Product) => {
     try {
       setSaveStatus(null);
-      const toSave = { ...p };
+      
+      // Validate required fields
+      if (!p.name?.trim()) throw new Error('Product name is required');
+      if (!p.unit) throw new Error('Unit type is required');
+      if (p.price === undefined || p.price === null) throw new Error('Price is required');
+      
+      const toSave: Product = {
+        id: p.id,
+        name: p.name.trim(),
+        description: p.description || '',
+        emoji: p.emoji || '🥩',
+        price: parseFloat(String(p.price)) || 0,
+        unit: p.unit || 'kg',
+        image_url: p.image_url || null,
+        active: p.active !== false,
+        checkAvailability: p.checkAvailability || false,
+      };
+      
       const { error } = await supabase.from('products').upsert(toSave).select();
       if (error) throw error;
       
@@ -530,8 +547,9 @@ function AdminPage({ products, setProducts, roundOpen, setRoundOpen }: {
       
       setTimeout(() => setSaveStatus(null), 3000);
     } catch (err) {
-      console.error('Failed to save product', err);
-      setSaveStatus({ type: 'error', msg: `✗ Failed to save. Check console.` });
+      const msg = err instanceof Error ? err.message : 'Unknown error';
+      console.error('Failed to save product:', msg, err);
+      setSaveStatus({ type: 'error', msg: `✗ ${msg}` });
     }
   };
 
@@ -584,7 +602,7 @@ function AdminPage({ products, setProducts, roundOpen, setRoundOpen }: {
   });
 
   const ProdForm = ({ p, onSave, onCancel }: { p: Product | null; onSave: (f: Product) => void; onCancel: () => void }) => {
-    const [f, setF] = useState<Product>(p || { id: '', name: '', description: '', emoji: '🥩', unitPrice: 0, unit: 'kg', image_url: '', active: true });
+    const [f, setF] = useState<Product>(p || { id: '', name: '', description: '', emoji: '🥩', price: 0, unit: 'kg', image_url: '', active: true });
     return (
       <div style={{ display: 'grid', gap: 10 }}>
         <input placeholder='Product Name' value={f.name} onChange={e => setF({ ...f, name: e.target.value })} />
@@ -592,8 +610,8 @@ function AdminPage({ products, setProducts, roundOpen, setRoundOpen }: {
         <input placeholder='Emoji' value={f.emoji} onChange={e => setF({ ...f, emoji: e.target.value })} />
         <input placeholder='Image URL (public)' value={f.image_url || ''} onChange={e => setF({ ...f, image_url: e.target.value })} />
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-          <input placeholder='Price (slab/unit)' type='number' value={f.price} onChange={e => setF({ ...f, unitPrice: parseFloat(e.target.value) || 0 })} />
-          <select value={f.unit} onChange={e => setF({ ...f, unit: e.target.value })}>
+          <input placeholder='Price (slab/unit)' type='number' value={f.price || 0} onChange={e => setF({ ...f, price: parseFloat(e.target.value) || 0 })} />
+          <select value={f.unit || 'kg'} onChange={e => setF({ ...f, unit: e.target.value })}>
             <option value='kg'>per kg</option>
             <option value='pack'>per pack</option>
             <option value='enquiry'>enquiry</option>
