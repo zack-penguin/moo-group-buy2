@@ -14,32 +14,38 @@ const G = {
   green: '#27ae60', amber: '#e67e22', gold: '#c9a84c',
 };
 
-const css = `@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Barlow+Condensed:wght@400;600;700&family=Barlow:wght@400;500&display=swap');
+const css = `
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Barlow+Condensed:wght@400;600;700&family=Barlow:wght@400;500&display=swap');
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-body { background: ${G.bg}; color: ${G.cream}; font-family: 'Barlow', sans-serif; }
-input, textarea, select { background: ${G.surface}; border: 1px solid ${G.border}; color: ${G.cream}; border-radius: 6px; padding: 10px 14px; font-size: 14px; width: 100%; outline: none; font-family: 'Barlow', sans-serif; }
-input:focus, textarea:focus, select:focus { border-color: ${G.red}; }
+body { background: #0f0e0d; color: #f0e6d3; font-family: 'Barlow', sans-serif; }
+input, textarea, select { background: #1a1918; border: 1px solid #2e2b28; color: #f0e6d3; border-radius: 6px; padding: 10px 14px; font-size: 14px; width: 100%; outline: none; font-family: 'Barlow', sans-serif; }
+input:focus, textarea:focus, select:focus { border-color: #c0392b; }
 table { width: 100%; border-collapse: collapse; }
-th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid ${G.border}; font-size: 13px; }
-th { font-family: 'Barlow Condensed', sans-serif; letter-spacing: .08em; text-transform: uppercase; color: ${G.muted}; font-weight: 600; }
-.notice-bar { background: #1a1209; border: 1px solid ${G.gold}44; border-radius: 8px; padding: 16px 20px; margin-bottom: 28px; }
-select option { background: ${G.surface}; }
+th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #2e2b28; font-size: 13px; }
+th { font-family: 'Barlow Condensed', sans-serif; letter-spacing: .08em; text-transform: uppercase; color: #8a807a; font-weight: 600; }
+.notice-bar { background: #1a1209; border: 1px solid #c9a84c44; border-radius: 8px; padding: 16px 20px; margin-bottom: 28px; }
+select option { background: #1a1918; }
 `;
 
-// ── Types ──────────────────────────────────────────────────────────────────────
+// ── Types ─────────────────────────────────────────────────────────────────────
+// Matches actual Supabase columns: id, name, price, unit, image_url, created_at, stock_quantity
+// We add: description, emoji, active, check_availability as optional extras stored in Supabase
+// (add these columns in Supabase if you want them to persist, otherwise they stay in-memory)
 
 interface Product {
   id: string;
   name: string;
-  description: string;
-  emoji: string;
-  unitPrice: number;
-  unit: string;
+  price: number;          // Supabase column: price
+  unit: string;           // Supabase column: unit
   image_url?: string;
-  active?: boolean;
-  isEnquiry?: boolean;
-  checkAvailability?: boolean;
+  stock_quantity?: number;
   created_at?: string;
+  // Extended fields — add these columns to Supabase products table for persistence
+  description?: string;
+  emoji?: string;
+  active?: boolean;
+  check_availability?: boolean;
+  is_enquiry?: boolean;
 }
 
 interface CartItem extends Product {
@@ -63,7 +69,6 @@ interface Order {
 }
 
 // ── Btn ───────────────────────────────────────────────────────────────────────
-
 type BtnVariant = 'primary' | 'ghost' | 'danger' | 'green' | 'gold';
 
 interface BtnProps {
@@ -82,7 +87,7 @@ const Btn = ({ children, onClick, variant = 'primary', size = 'md', disabled = f
     fontSize: size === 'sm' ? 13 : 14, fontWeight: 600,
     fontFamily: "'Barlow Condensed', sans-serif", letterSpacing: '.06em',
     borderRadius: 6, border: 'none', cursor: disabled ? 'not-allowed' : 'pointer',
-    opacity: disabled ? 0.5 : 1, transition: 'opacity .15s, transform .1s', textDecoration: 'none',
+    opacity: disabled ? 0.5 : 1, transition: 'opacity .15s',
   };
   const variants: Record<BtnVariant, React.CSSProperties> = {
     primary: { background: G.red, color: '#fff' },
@@ -98,36 +103,23 @@ const Btn = ({ children, onClick, variant = 'primary', size = 'md', disabled = f
   );
 };
 
-// ── Badge ─────────────────────────────────────────────────────────────────────
-
 const Badge = ({ children, color = G.muted }: { children: React.ReactNode; color?: string }) => (
   <span style={{
     display: 'inline-block', padding: '2px 10px', borderRadius: 20, fontSize: 11,
     fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, letterSpacing: '.08em',
     textTransform: 'uppercase', background: color + '22', color,
-  }}>
-    {children}
-  </span>
+  }}>{children}</span>
 );
 
-// ── Modal ─────────────────────────────────────────────────────────────────────
-
 const Modal = ({ children, onClose }: { children: React.ReactNode; onClose: () => void }) => (
-  <div onClick={onClose} style={{
-    position: 'fixed', inset: 0, background: '#000c', zIndex: 999,
-    display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20,
-  }}>
-    <div onClick={e => e.stopPropagation()} style={{
-      background: G.card, border: `1px solid ${G.border}`, borderRadius: 10,
-      padding: 28, maxWidth: 440, width: '100%', maxHeight: '90vh', overflowY: 'auto',
-    }}>
+  <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: '#000c', zIndex: 999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+    <div onClick={e => e.stopPropagation()} style={{ background: G.card, border: `1px solid ${G.border}`, borderRadius: 10, padding: 28, maxWidth: 440, width: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
       {children}
     </div>
   </div>
 );
 
 // ── Nav ───────────────────────────────────────────────────────────────────────
-
 function Nav({ page, setPage, roundOpen }: { page: string; setPage: (p: string) => void; roundOpen: boolean }) {
   return (
     <nav style={{ background: G.surface, borderBottom: `2px solid ${G.red}`, position: 'sticky', top: 0, zIndex: 100 }}>
@@ -147,14 +139,9 @@ function Nav({ page, setPage, roundOpen }: { page: string; setPage: (p: string) 
                 background: page === n ? G.red : 'transparent', color: page === n ? '#fff' : G.muted,
                 padding: '5px 12px', fontSize: 12, borderRadius: 5, border: 'none', cursor: 'pointer',
                 fontFamily: "'Barlow Condensed', sans-serif", letterSpacing: '.08em', fontWeight: 600,
-              }}>
-                {n}
-              </button>
+              }}>{n}</button>
             ))}
-            <button onClick={() => setPage('Admin')} style={{
-              background: 'transparent', color: G.bg, padding: '5px 12px',
-              fontSize: 12, borderRadius: 5, border: 'none', userSelect: 'none', cursor: 'pointer',
-            }}>⚙️</button>
+            <button onClick={() => setPage('Admin')} style={{ background: 'transparent', color: G.bg, padding: '5px 12px', fontSize: 12, borderRadius: 5, border: 'none', userSelect: 'none', cursor: 'pointer' }}>⚙️</button>
           </div>
         </div>
       </div>
@@ -163,7 +150,6 @@ function Nav({ page, setPage, roundOpen }: { page: string; setPage: (p: string) 
 }
 
 // ── ShopPage ──────────────────────────────────────────────────────────────────
-
 function ShopPage({ products, setPage, cart, setCart }: {
   products: Product[];
   setPage: (p: string) => void;
@@ -176,14 +162,9 @@ function ShopPage({ products, setPage, cart, setCart }: {
   const [enquiryNote, setEnquiryNote] = useState('');
   const [toast, setToast] = useState<string | null>(null);
 
-  const showToast = (name: string) => {
-    setToast(name);
-    setTimeout(() => setToast(null), 2500);
-  };
-
-  const isKg = (p: Product) => p.unit === 'kg';
-  const isEnquiry = (p: Product) => p.unit === 'enquiry';
-
+  const showToast = (name: string) => { setToast(name); setTimeout(() => setToast(null), 2500); };
+  const isKg = (p: Product) => p.unit?.toLowerCase() === 'kg';
+  const isEnquiry = (p: Product) => p.is_enquiry === true;
   const openModal = (p: Product) => { setSliceWeight('250'); setPieces('2'); setEnquiryNote(''); setConfiguring(p); };
 
   const confirmAdd = () => {
@@ -192,27 +173,23 @@ function ShopPage({ products, setPage, cart, setCart }: {
     if (isEnquiry(p)) {
       if (!enquiryNote.trim()) return alert('Please describe what you\'re looking for.');
       setCart(c => [...c, { ...p, cartKey: `${p.id}_${Date.now()}`, enquiryNote: enquiryNote.trim(), lineTotal: 0, qty: 1 }]);
-      showToast(p.name);
-      setConfiguring(null);
-      return;
+      showToast(p.name); setConfiguring(null); return;
     }
     const sw = parseInt(sliceWeight) || 0;
     const pc = parseInt(pieces) || 0;
     if (sw <= 0 || pc <= 0) return alert('Please enter a valid slice weight and number of pieces.');
     const totalKg = parseFloat((sw * pc / 1000).toFixed(4));
-    const lineTotal = parseFloat((totalKg * p.unitPrice).toFixed(2));
+    const lineTotal = parseFloat((totalKg * p.price).toFixed(2));
     setCart(c => [...c, { ...p, cartKey: `${p.id}_${Date.now()}`, sliceWeight: sw, pieces: pc, totalKg, lineTotal, qty: 1 }]);
-    showToast(p.name);
-    setConfiguring(null);
+    showToast(p.name); setConfiguring(null);
   };
 
   const addPackToCart = (p: Product) => {
     setCart(c => {
       const ex = c.find(x => x.id === p.id && !x.sliceWeight);
-      if (ex) return c.map(x => (x.id === p.id && !x.sliceWeight)
-        ? { ...x, qty: x.qty + 1, lineTotal: parseFloat(((x.qty + 1) * p.unitPrice).toFixed(2)) }
-        : x);
-      return [...c, { ...p, cartKey: p.id, qty: 1, lineTotal: p.unitPrice }];
+      if (ex) return c.map(x => x.id === p.id && !x.sliceWeight
+        ? { ...x, qty: x.qty + 1, lineTotal: parseFloat(((x.qty + 1) * p.price).toFixed(2)) } : x);
+      return [...c, { ...p, cartKey: p.id, qty: 1, lineTotal: p.price }];
     });
     showToast(p.name);
   };
@@ -220,19 +197,13 @@ function ShopPage({ products, setPage, cart, setCart }: {
   const sw = parseInt(sliceWeight) || 0;
   const pc = parseInt(pieces) || 0;
   const estKg = sw > 0 && pc > 0 ? (sw * pc / 1000).toFixed(3) : null;
-  const estCost = configuring && estKg ? (parseFloat(estKg) * configuring.unitPrice).toFixed(2) : null;
-  const cartCount = cart.length;
+  const estCost = configuring && estKg ? (parseFloat(estKg) * configuring.price).toFixed(2) : null;
   const fmtPrice = (v: number) => v % 1 === 0 ? `${v}` : v.toFixed(2);
 
   return (
     <div style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 20px' }}>
       {toast && (
-        <div style={{
-          position: 'fixed', bottom: 28, left: '50%', transform: 'translateX(-50%)',
-          background: G.card, border: `1px solid ${G.green}66`, borderRadius: 10,
-          padding: '14px 20px', zIndex: 1000, display: 'flex', alignItems: 'center', gap: 10,
-          boxShadow: '0 8px 32px #000a', minWidth: 280, maxWidth: 360,
-        }}>
+        <div style={{ position: 'fixed', bottom: 28, left: '50%', transform: 'translateX(-50%)', background: G.card, border: `1px solid ${G.green}66`, borderRadius: 10, padding: '14px 20px', zIndex: 1000, display: 'flex', alignItems: 'center', gap: 10, boxShadow: '0 8px 32px #000a', minWidth: 280 }}>
           <span style={{ fontSize: 22 }}>🛒</span>
           <div style={{ flex: 1 }}>
             <div style={{ fontWeight: 700, fontSize: 13, color: G.cream }}>{toast}</div>
@@ -245,41 +216,36 @@ function ShopPage({ products, setPage, cart, setCart }: {
       {configuring && (
         <Modal onClose={() => setConfiguring(null)}>
           <div style={{ marginBottom: 16 }}>
-            <div style={{ fontSize: 36, marginBottom: 8 }}>{configuring.emoji}</div>
+            <div style={{ fontSize: 36, marginBottom: 8 }}>{configuring.emoji || '🥩'}</div>
             <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, fontWeight: 900, marginBottom: 4 }}>{configuring.name}</h2>
             {!isEnquiry(configuring) && (
               <div style={{ fontFamily: "'Barlow Condensed', sans-serif", color: G.red, fontSize: 16 }}>
-                S${fmtPrice(configuring.unitPrice)}/{configuring.unit}
+                S${fmtPrice(configuring.price)}/{configuring.unit}
                 <span style={{ fontSize: 11, color: G.muted, marginLeft: 8 }}>(slab price)</span>
               </div>
             )}
           </div>
-
-          {configuring.checkAvailability && (
+          {configuring.check_availability && (
             <div style={{ background: '#2a1f08', border: `1px solid ${G.gold}44`, borderRadius: 6, padding: 10, marginBottom: 14, fontSize: 12, color: G.gold }}>
-              ⚠️ Please check with me on WhatsApp first to confirm availability before placing this item in your order.
+              ⚠️ Please check with me on WhatsApp first to confirm availability.
             </div>
           )}
-
           {isEnquiry(configuring) ? (
             <div style={{ marginBottom: 16 }}>
-              <label style={{ fontSize: 12, color: G.muted, letterSpacing: '.08em', textTransform: 'uppercase', display: 'block', marginBottom: 6 }}>What are you looking for?</label>
+              <label style={{ fontSize: 12, color: G.muted, textTransform: 'uppercase', display: 'block', marginBottom: 6 }}>What are you looking for?</label>
               <textarea rows={4} value={enquiryNote} onChange={e => setEnquiryNote(e.target.value)} placeholder='e.g. Wagyu ribeye, Tomahawk, Lamb chops…' style={{ resize: 'vertical' }} />
-              <div style={{ fontSize: 11, color: G.muted, marginTop: 6 }}>I'll get back to you via WhatsApp to discuss availability and pricing.</div>
             </div>
           ) : (
             <>
-              <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: 11, color: G.muted, letterSpacing: '.08em', textTransform: 'uppercase', marginBottom: 10 }}>Customise your cut</div>
+              <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: 11, color: G.muted, textTransform: 'uppercase', marginBottom: 10 }}>Customise your cut</div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
                 <div>
-                  <label style={{ fontSize: 12, color: G.muted, letterSpacing: '.08em', textTransform: 'uppercase', display: 'block', marginBottom: 6 }}>Slice Weight</label>
+                  <label style={{ fontSize: 12, color: G.muted, textTransform: 'uppercase', display: 'block', marginBottom: 6 }}>Slice Weight (g)</label>
                   <input type='number' value={sliceWeight} onChange={e => setSliceWeight(e.target.value)} placeholder='250' min='50' />
-                  <div style={{ fontSize: 11, color: G.muted, marginTop: 4 }}>grams per piece</div>
                 </div>
                 <div>
-                  <label style={{ fontSize: 12, color: G.muted, letterSpacing: '.08em', textTransform: 'uppercase', display: 'block', marginBottom: 6 }}>No. of Pieces</label>
+                  <label style={{ fontSize: 12, color: G.muted, textTransform: 'uppercase', display: 'block', marginBottom: 6 }}>No. of Pieces</label>
                   <input type='number' value={pieces} onChange={e => setPieces(e.target.value)} placeholder='2' min='1' />
-                  <div style={{ fontSize: 11, color: G.muted, marginTop: 4 }}>how many slices</div>
                 </div>
               </div>
               {estKg && (
@@ -296,7 +262,6 @@ function ShopPage({ products, setPage, cart, setCart }: {
               )}
             </>
           )}
-
           <div style={{ display: 'flex', gap: 10 }}>
             <Btn onClick={confirmAdd} style={{ flex: 1 }}>Add to Order ✓</Btn>
             <Btn onClick={() => setConfiguring(null)} variant='ghost'>Cancel</Btn>
@@ -307,7 +272,7 @@ function ShopPage({ products, setPage, cart, setCart }: {
       <div className='notice-bar'>
         <div style={{ fontFamily: "'Barlow Condensed', sans-serif", color: G.gold, fontSize: 13, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: 6 }}>ℹ️ Important — Please Read</div>
         <p style={{ fontSize: 13, lineHeight: 1.7, color: G.cream }}>
-          All beef is sourced directly from <strong style={{ color: G.gold }}>Mornington Butchery &amp; Pantry</strong>. I am simply collating orders on behalf of our group — I do not process, prepare, or handle the meat. All payments and pickups are arranged directly between you and the butchery via WhatsApp.
+          All beef is sourced directly from <strong style={{ color: G.gold }}>Mornington Butchery &amp; Pantry</strong>. I am simply collating orders on behalf of our group — I do not process, prepare, or handle the meat. All payments and pickups are arranged directly via WhatsApp.
         </p>
       </div>
 
@@ -316,7 +281,7 @@ function ShopPage({ products, setPage, cart, setCart }: {
           <div style={{ fontFamily: "'Barlow Condensed', sans-serif", color: G.red, letterSpacing: '.14em', textTransform: 'uppercase', fontSize: 12, marginBottom: 4 }}>Current Round · Slab Prices</div>
           <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: 'clamp(26px,5vw,42px)', fontWeight: 900 }}>Available Cuts</h1>
         </div>
-        {cartCount > 0 && <Btn onClick={() => setPage('Order')}>🛒 View Cart ({cartCount})</Btn>}
+        {cart.length > 0 && <Btn onClick={() => setPage('Order')}>🛒 View Cart ({cart.length})</Btn>}
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 18 }}>
@@ -327,31 +292,24 @@ function ShopPage({ products, setPage, cart, setCart }: {
             onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.transform = ''; (e.currentTarget as HTMLDivElement).style.boxShadow = ''; }}>
             {p.image_url
               ? <img src={p.image_url} alt={p.name} style={{ width: '100%', height: 160, objectFit: 'cover', objectPosition: 'center' }} />
-              : <div style={{
-                  background: p.isEnquiry ? 'linear-gradient(135deg, #1a1a2e, #0f0f1a)' : 'linear-gradient(135deg, #2a1a18, #1a1210)',
-                  height: 160, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 56,
-                }}>{p.emoji}</div>
+              : <div style={{ background: 'linear-gradient(135deg, #2a1a18, #1a1210)', height: 160, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 56 }}>{p.emoji || '🥩'}</div>
             }
             <div style={{ padding: 18 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6, gap: 8 }}>
-                <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: 15, fontWeight: 700, lineHeight: 1.3 }}>{p.name}</h3>
-              </div>
-              <p style={{ fontSize: 12, color: G.muted, lineHeight: 1.5, marginBottom: 12 }}>{p.description}</p>
-              {p.checkAvailability && (
-                <div style={{ fontSize: 11, color: G.gold, marginBottom: 8 }}>⚠️ Check WhatsApp for availability</div>
-              )}
-              {!p.isEnquiry && p.unitPrice > 0 && (
+              <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: 15, fontWeight: 700, lineHeight: 1.3, marginBottom: 6 }}>{p.name}</h3>
+              {p.description && <p style={{ fontSize: 12, color: G.muted, lineHeight: 1.5, marginBottom: 12 }}>{p.description}</p>}
+              {p.check_availability && <div style={{ fontSize: 11, color: G.gold, marginBottom: 8 }}>⚠️ Check WhatsApp for availability</div>}
+              {!p.is_enquiry && p.price > 0 && (
                 <div style={{ marginBottom: 14 }}>
                   <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: 22, fontWeight: 700 }}>
-                    S${fmtPrice(p.unitPrice)}<span style={{ fontSize: 12, color: G.muted }}>/{p.unit}</span>
+                    S${fmtPrice(p.price)}<span style={{ fontSize: 12, color: G.muted }}>/{p.unit}</span>
                   </div>
                 </div>
               )}
               <Btn
-                onClick={() => p.isEnquiry ? openModal(p) : (isKg(p) ? openModal(p) : addPackToCart(p))}
-                variant={p.isEnquiry ? 'gold' : 'primary'}
+                onClick={() => p.is_enquiry ? openModal(p) : (isKg(p) ? openModal(p) : addPackToCart(p))}
+                variant={p.is_enquiry ? 'gold' : 'primary'}
                 style={{ width: '100%' }}>
-                {p.isEnquiry ? '✉️ Submit Enquiry' : (isKg(p) ? 'Add to Cart' : 'Add to Order')}
+                {p.is_enquiry ? '✉️ Submit Enquiry' : (isKg(p) ? 'Add to Cart' : 'Add to Order')}
               </Btn>
             </div>
           </div>
@@ -362,7 +320,6 @@ function ShopPage({ products, setPage, cart, setCart }: {
 }
 
 // ── OrderPage ─────────────────────────────────────────────────────────────────
-
 function OrderPage({ roundOpen, cart, setCart }: {
   roundOpen: boolean;
   cart: CartItem[];
@@ -373,25 +330,24 @@ function OrderPage({ roundOpen, cart, setCart }: {
   const [submitted, setSubmitted] = useState<Order | null>(null);
 
   const removeItem = (cartKey: string) => setCart(c => c.filter(x => x.cartKey !== cartKey));
-
   const updatePackQty = (cartKey: string, delta: number) => {
     setCart(c => c.map(x => x.cartKey === cartKey
-      ? { ...x, qty: Math.max(1, x.qty + delta), lineTotal: parseFloat((Math.max(1, x.qty + delta) * x.unitPrice).toFixed(2)) }
+      ? { ...x, qty: Math.max(1, x.qty + delta), lineTotal: parseFloat((Math.max(1, x.qty + delta) * x.price).toFixed(2)) }
       : x));
   };
-
   const total = parseFloat(cart.reduce((a, b) => a + b.lineTotal, 0).toFixed(2));
 
   const submit = async () => {
     if (!name.trim() || !wa.trim() || cart.length === 0) return alert('Please fill in your name, WhatsApp number, and add at least one item.');
     const order: Order = { id: 'o' + Date.now(), name: name.trim(), wa: wa.trim(), items: cart, total, status: 'Pending', ts: Date.now() };
-    await supabase.from('moo_orders').insert([order]);
+    const { error } = await supabase.from('moo_orders').insert([order]);
+    if (error) { console.error('Order insert failed:', error); alert('Something went wrong. Please try again.'); return; }
     setSubmitted(order);
     setCart([]);
   };
 
   const formatItem = (i: CartItem) => {
-    if (i.isEnquiry) return `${i.name} — Enquiry: ${i.enquiryNote}`;
+    if (i.is_enquiry) return `${i.name} — Enquiry: ${i.enquiryNote}`;
     return i.sliceWeight
       ? `${i.name} — ${i.pieces} piece(s) @ ${i.sliceWeight}g each (${i.totalKg?.toFixed(3)}kg) = S$${i.lineTotal.toFixed(2)}`
       : `${i.name} x${i.qty} = S$${i.lineTotal.toFixed(2)}`;
@@ -414,23 +370,20 @@ function OrderPage({ roundOpen, cart, setCart }: {
       <div style={{ background: G.card, border: `1px solid ${G.green}44`, borderRadius: 10, padding: 28 }}>
         <div style={{ fontSize: 52, marginBottom: 16 }}>✅</div>
         <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 26, marginBottom: 8 }}>Order Received!</h2>
-        <p style={{ color: G.muted, marginBottom: 6, fontSize: 13 }}>Tap below to confirm your order via WhatsApp.</p>
-        <div style={{ background: '#1a1209', border: `1px solid ${G.gold}44`, borderRadius: 8, padding: 14, marginBottom: 6, fontSize: 13, color: G.cream, lineHeight: 1.6 }}>
-          💳 <strong style={{ color: G.gold }}>Payment</strong> — All payments are to be settled directly via WhatsApp with me at <strong>+65 9662 5208</strong> before collection.
+        <p style={{ color: G.muted, marginBottom: 12, fontSize: 13 }}>Tap below to confirm your order via WhatsApp.</p>
+        <div style={{ background: '#1a1209', border: `1px solid ${G.gold}44`, borderRadius: 8, padding: 14, marginBottom: 16, fontSize: 13, color: G.cream, lineHeight: 1.6 }}>
+          💳 <strong style={{ color: G.gold }}>Payment</strong> — Settle directly via WhatsApp at <strong>+65 9662 5208</strong> before collection.
         </div>
-        <p style={{ color: G.gold, marginBottom: 20, fontSize: 12 }}>📲 Pickup / collection arrangements will be made via WhatsApp at <strong>+65 9662 5208</strong>.</p>
         <div style={{ background: G.surface, borderRadius: 6, padding: 16, marginBottom: 20 }}>
           {submitted.items.map((i, idx) => (
             <div key={idx} style={{ marginBottom: 10, paddingBottom: 10, borderBottom: `1px solid ${G.border}` }}>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ fontWeight: 600 }}>{i.emoji} {i.name}</span>
-                <span style={{ color: G.red, fontWeight: 700 }}>{i.isEnquiry ? 'TBD' : `S$${i.lineTotal.toFixed(2)}`}</span>
+                <span style={{ fontWeight: 600 }}>{i.emoji || '🥩'} {i.name}</span>
+                <span style={{ color: G.red, fontWeight: 700 }}>{i.is_enquiry ? 'TBD' : `S$${i.lineTotal.toFixed(2)}`}</span>
               </div>
-              {i.isEnquiry
-                ? <div style={{ color: G.muted, fontSize: 12, marginTop: 2 }}>Enquiry: {i.enquiryNote}</div>
-                : i.sliceWeight
-                  ? <div style={{ color: G.muted, fontSize: 12, marginTop: 2 }}>{i.pieces} pcs × {i.sliceWeight}g = {i.totalKg?.toFixed(3)}kg</div>
-                  : <div style={{ color: G.muted, fontSize: 12, marginTop: 2 }}>Qty: {i.qty}</div>}
+              {i.is_enquiry ? <div style={{ color: G.muted, fontSize: 12, marginTop: 2 }}>Enquiry: {i.enquiryNote}</div>
+                : i.sliceWeight ? <div style={{ color: G.muted, fontSize: 12, marginTop: 2 }}>{i.pieces} pcs × {i.sliceWeight}g = {i.totalKg?.toFixed(3)}kg</div>
+                : <div style={{ color: G.muted, fontSize: 12, marginTop: 2 }}>Qty: {i.qty}</div>}
             </div>
           ))}
           <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, fontSize: 16 }}>
@@ -448,18 +401,13 @@ function OrderPage({ roundOpen, cart, setCart }: {
     <div style={{ maxWidth: 680, margin: '0 auto', padding: '32px 20px' }}>
       <div style={{ fontFamily: "'Barlow Condensed', sans-serif", color: G.red, letterSpacing: '.14em', textTransform: 'uppercase', fontSize: 12, marginBottom: 4 }}>Your Order</div>
       <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: 36, fontWeight: 900, marginBottom: 24 }}>Review &amp; Submit</h1>
-
       <div style={{ background: G.card, border: `1px solid ${G.border}`, borderRadius: 8, padding: 20, marginBottom: 20 }}>
         <h3 style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: 14, letterSpacing: '.1em', textTransform: 'uppercase', color: G.muted, marginBottom: 14 }}>Your Details</h3>
         <div style={{ display: 'grid', gap: 12 }}>
           <input placeholder='Full Name' value={name} onChange={e => setName(e.target.value)} />
-          <input placeholder='Your WhatsApp Number (e.g. 91234567)' value={wa} onChange={e => setWa(e.target.value)} />
-        </div>
-        <div style={{ fontSize: 12, color: G.muted, marginTop: 10 }}>
-          📲 After submitting, you'll be prompted to confirm your order via WhatsApp to <strong style={{ color: G.gold }}>+65 9662 5208</strong>. Pickup details will be arranged there.
+          <input placeholder='WhatsApp Number (e.g. 91234567)' value={wa} onChange={e => setWa(e.target.value)} />
         </div>
       </div>
-
       <div style={{ background: G.card, border: `1px solid ${G.border}`, borderRadius: 8, padding: 20, marginBottom: 20 }}>
         <h3 style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: 14, letterSpacing: '.1em', textTransform: 'uppercase', color: G.muted, marginBottom: 14 }}>Order Items</h3>
         {cart.length === 0
@@ -468,8 +416,8 @@ function OrderPage({ roundOpen, cart, setCart }: {
             <div key={item.cartKey} style={{ padding: '12px 0', borderBottom: `1px solid ${G.border}` }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 600, marginBottom: 4 }}>{item.emoji} {item.name}</div>
-                  {item.isEnquiry ? (
+                  <div style={{ fontWeight: 600, marginBottom: 4 }}>{item.emoji || '🥩'} {item.name}</div>
+                  {item.is_enquiry ? (
                     <div style={{ fontSize: 12, color: G.muted }}>Enquiry: {item.enquiryNote}</div>
                   ) : item.sliceWeight ? (
                     <div style={{ fontSize: 13, color: G.muted }}>{item.pieces} pcs × {item.sliceWeight}g = {item.totalKg?.toFixed(3)}kg</div>
@@ -478,12 +426,12 @@ function OrderPage({ roundOpen, cart, setCart }: {
                       <button onClick={() => updatePackQty(item.cartKey, -1)} style={{ width: 26, height: 26, borderRadius: 4, background: G.surface, color: G.cream, fontSize: 16, border: `1px solid ${G.border}`, cursor: 'pointer' }}>−</button>
                       <span style={{ fontWeight: 700 }}>{item.qty}</span>
                       <button onClick={() => updatePackQty(item.cartKey, 1)} style={{ width: 26, height: 26, borderRadius: 4, background: G.surface, color: G.cream, fontSize: 16, border: `1px solid ${G.border}`, cursor: 'pointer' }}>+</button>
-                      <span style={{ fontSize: 12, color: G.muted }}>× S${item.unitPrice}/pack</span>
+                      <span style={{ fontSize: 12, color: G.muted }}>× S${item.price}/pack</span>
                     </div>
                   )}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginLeft: 12 }}>
-                  <span style={{ fontWeight: 700, color: G.red }}>{item.isEnquiry ? 'TBD' : `S$${item.lineTotal.toFixed(2)}`}</span>
+                  <span style={{ fontWeight: 700, color: G.red }}>{item.is_enquiry ? 'TBD' : `S$${item.lineTotal.toFixed(2)}`}</span>
                   <button onClick={() => removeItem(item.cartKey)} style={{ background: 'transparent', color: G.muted, fontSize: 18, padding: '0 4px', border: 'none', cursor: 'pointer' }}>×</button>
                 </div>
               </div>
@@ -495,14 +443,12 @@ function OrderPage({ roundOpen, cart, setCart }: {
           </div>
         )}
       </div>
-
       <Btn onClick={submit} disabled={cart.length === 0} style={{ width: '100%', fontSize: 15 }}>Submit Order →</Btn>
     </div>
   );
 }
 
 // ── AdminPage ─────────────────────────────────────────────────────────────────
-
 function AdminPage({ products, setProducts, roundOpen, setRoundOpen }: {
   products: Product[];
   setProducts: React.Dispatch<React.SetStateAction<Product[]>>;
@@ -524,34 +470,46 @@ function AdminPage({ products, setProducts, roundOpen, setRoundOpen }: {
   }, [authed]);
 
   const loadOrders = async () => {
-    const { data } = await supabase.from('moo_orders').select('*');
+    const { data, error } = await supabase.from('moo_orders').select('*').order('ts', { ascending: false });
+    if (error) console.error('loadOrders error:', error);
     setOrders((data as Order[]) || []);
   };
 
   const updateStatus = async (id: string, status: string) => {
     setOrders(prev => prev.map(o => o.id === id ? { ...o, status } : o));
-    await supabase.from('moo_orders').update({ status }).eq('id', id);
+    const { error } = await supabase.from('moo_orders').update({ status }).eq('id', id);
+    if (error) { console.error('updateStatus error:', error); loadOrders(); }
   };
 
   const deleteOrder = async (id: string) => {
     setOrders(prev => prev.filter(o => o.id !== id));
-    await supabase.from('moo_orders').delete().eq('id', id);
+    const { error } = await supabase.from('moo_orders').delete().eq('id', id);
+    if (error) { console.error('deleteOrder error:', error); loadOrders(); }
+  };
+
+  const reloadProducts = async () => {
+    const { data, error } = await supabase.from('products').select('*').order('created_at', { ascending: false });
+    if (!error && data) setProducts(data as Product[]);
   };
 
   const saveProd = async (p: Partial<Product>) => {
-    const toSave = { ...p };
-    const { error } = await supabase.from('products').upsert(toSave).select();
-    if (error) { console.error('Failed to save product', error); return; }
-    const { data: all, error: allErr } = await supabase.from('products').select('*').order('created_at', { ascending: false });
-    if (!allErr && all) setProducts(all as Product[]);
+    const { error } = await supabase.from('products').upsert({ ...p });
+    if (error) { console.error('saveProd error:', error); alert('Save failed: ' + error.message); return; }
+    await reloadProducts();
     setEditProd(null);
   };
 
   const deleteProd = async (id: string) => {
     const { error } = await supabase.from('products').delete().eq('id', id);
-    if (error) console.error('Failed to delete product', error);
-    const { data: all, error: allErr } = await supabase.from('products').select('*').order('created_at', { ascending: false });
-    if (!allErr && all) setProducts(all as Product[]);
+    if (error) { console.error('deleteProd error:', error); alert('Delete failed: ' + error.message); return; }
+    setProducts(prev => prev.filter(p => p.id !== id));
+  };
+
+  const toggleActive = async (p: Product) => {
+    const newActive = !p.active;
+    const { error } = await supabase.from('products').update({ active: newActive }).eq('id', p.id);
+    if (error) { console.error('toggleActive error:', error); alert('Toggle failed: ' + error.message); return; }
+    setProducts(prev => prev.map(x => x.id === p.id ? { ...x, active: newActive } : x));
   };
 
   const toggleRound = async () => {
@@ -565,54 +523,51 @@ function AdminPage({ products, setProducts, roundOpen, setRoundOpen }: {
       ['Name', 'WhatsApp', 'Items', 'Total', 'Status', 'Date'],
       ...orders.map(o => [
         o.name, o.wa,
-        o.items.map(i => i.isEnquiry ? `${i.name}: ${i.enquiryNote}` : i.sliceWeight ? `${i.name} ${i.pieces}pc×${i.sliceWeight}g` : `${i.name} x${i.qty}`).join('; '),
+        o.items.map(i => i.is_enquiry ? `${i.name}: ${i.enquiryNote}` : i.sliceWeight ? `${i.name} ${i.pieces}pc×${i.sliceWeight}g` : `${i.name} x${i.qty}`).join('; '),
         `S$${o.total.toFixed(2)}`, o.status, new Date(o.ts).toLocaleString(),
       ]),
     ];
-    const csv = rows.map(r => r.map(c => `"${c}"`).join(',')).join('\n');
+    const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
     const a = document.createElement('a');
     a.href = 'data:text/csv,' + encodeURIComponent(csv);
-    a.download = 'orders.csv';
-    a.click();
+    a.download = 'orders.csv'; a.click();
   };
 
   const statusColors: Record<string, string> = { Pending: G.amber, Paid: G.green, Collected: G.muted, Filled: G.green };
   const statusColor = (s: string) => statusColors[s] || G.muted;
-
   const tabStyle = (t: string): React.CSSProperties => ({
-    background: tab === t ? G.red : 'transparent',
-    color: tab === t ? '#fff' : G.muted,
-    padding: '8px 16px', fontSize: 13, borderRadius: 5,
-    fontFamily: "'Barlow Condensed', sans-serif",
+    background: tab === t ? G.red : 'transparent', color: tab === t ? '#fff' : G.muted,
+    padding: '8px 16px', fontSize: 13, borderRadius: 5, fontFamily: "'Barlow Condensed', sans-serif",
     letterSpacing: '.08em', fontWeight: 600, border: 'none', cursor: 'pointer',
   });
 
+  // ProdForm uses Supabase column names directly
   const ProdForm = ({ p, onSave, onCancel }: { p: Partial<Product>; onSave: (f: Partial<Product>) => void; onCancel: () => void }) => {
-    const [f, setF] = useState<Partial<Product>>(p || { name: '', description: '', emoji: '🥩', unitPrice: 0, unit: 'kg', image_url: '', active: true });
+    const [f, setF] = useState<Partial<Product>>(p);
     return (
       <div style={{ display: 'grid', gap: 10 }}>
-        <input placeholder='Product Name' value={f.name || ''} onChange={e => setF({ ...f, name: e.target.value })} />
+        <input placeholder='Product Name *' value={f.name || ''} onChange={e => setF({ ...f, name: e.target.value })} />
         <input placeholder='Description' value={f.description || ''} onChange={e => setF({ ...f, description: e.target.value })} />
-        <input placeholder='Emoji' value={f.emoji || ''} onChange={e => setF({ ...f, emoji: e.target.value })} />
-        <input placeholder='Image URL (public)' value={f.image_url || ''} onChange={e => setF({ ...f, image_url: e.target.value })} />
+        <input placeholder='Emoji (e.g. 🥩)' value={f.emoji || ''} onChange={e => setF({ ...f, emoji: e.target.value })} />
+        <input placeholder='Image URL' value={f.image_url || ''} onChange={e => setF({ ...f, image_url: e.target.value })} />
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-          <input placeholder='Price (slab/unit)' type='number' value={f.unitPrice ?? 0} onChange={e => setF({ ...f, unitPrice: parseFloat(e.target.value) || 0 })} />
-          <select value={f.unit || 'kg'} onChange={e => setF({ ...f, unit: e.target.value })}>
-            <option value='kg'>per kg</option>
-            <option value='pack'>per pack</option>
-            <option value='enquiry'>enquiry</option>
-          </select>
+          <input placeholder='Price *' type='number' value={f.price ?? ''} onChange={e => setF({ ...f, price: parseFloat(e.target.value) || 0 })} />
+          <input placeholder='Unit (e.g. KG, Pack)' value={f.unit || ''} onChange={e => setF({ ...f, unit: e.target.value })} />
         </div>
         <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13 }}>
           <input type='checkbox' checked={!!f.active} onChange={e => setF({ ...f, active: e.target.checked })} style={{ width: 'auto' }} />
-          Active (Show on website)
+          Active (visible on shop)
         </label>
         <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13 }}>
-          <input type='checkbox' checked={!!f.checkAvailability} onChange={e => setF({ ...f, checkAvailability: e.target.checked })} style={{ width: 'auto' }} />
-          Show 'Check WhatsApp for availability' warning
+          <input type='checkbox' checked={!!f.check_availability} onChange={e => setF({ ...f, check_availability: e.target.checked })} style={{ width: 'auto' }} />
+          Show "Check WhatsApp" availability warning
+        </label>
+        <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13 }}>
+          <input type='checkbox' checked={!!f.is_enquiry} onChange={e => setF({ ...f, is_enquiry: e.target.checked })} style={{ width: 'auto' }} />
+          Enquiry item (no direct price)
         </label>
         <div style={{ display: 'flex', gap: 10 }}>
-          <Btn onClick={() => onSave(f)} style={{ flex: 1 }}>Save</Btn>
+          <Btn onClick={() => onSave(f)} style={{ flex: 1 }}>Save Product</Btn>
           <Btn onClick={onCancel} variant='ghost'>Cancel</Btn>
         </div>
       </div>
@@ -657,11 +612,11 @@ function AdminPage({ products, setProducts, roundOpen, setRoundOpen }: {
                     <td style={{ fontWeight: 600 }}>{o.name}</td>
                     <td style={{ color: G.muted }}>{o.wa}</td>
                     <td style={{ fontSize: 12 }}>
-                      {o.items.map((i, idx) => (
-                        <div key={idx}>{i.emoji} {i.name}{i.isEnquiry ? ` · ${i.enquiryNote}` : i.sliceWeight ? ` · ${i.pieces}pc×${i.sliceWeight}g` : ` x${i.qty}`}</div>
+                      {Array.isArray(o.items) && o.items.map((i, idx) => (
+                        <div key={idx}>{i.emoji || '🥩'} {i.name}{i.is_enquiry ? ` · ${i.enquiryNote}` : i.sliceWeight ? ` · ${i.pieces}pc×${i.sliceWeight}g` : ` x${i.qty}`}</div>
                       ))}
                     </td>
-                    <td style={{ fontWeight: 700, color: G.red }}>S${o.total.toFixed(2)}</td>
+                    <td style={{ fontWeight: 700, color: G.red }}>S${Number(o.total).toFixed(2)}</td>
                     <td><Badge color={statusColor(o.status)}>{o.status}</Badge></td>
                     <td style={{ color: G.muted, fontSize: 12 }}>{new Date(o.ts).toLocaleDateString()}</td>
                     <td>
@@ -669,7 +624,7 @@ function AdminPage({ products, setProducts, roundOpen, setRoundOpen }: {
                         {(['Pending', 'Paid', 'Collected'] as string[]).filter(s => s !== o.status).map(s => (
                           <Btn key={s} onClick={() => updateStatus(o.id, s)} variant='ghost' size='sm'>{s}</Btn>
                         ))}
-                        <Btn onClick={() => deleteOrder(o.id)} variant='danger' size='sm'>✕</Btn>
+                        <Btn onClick={() => deleteOrder(o.id)} variant='danger' size='sm'>✕ Delete</Btn>
                       </div>
                     </td>
                   </tr>
@@ -683,7 +638,7 @@ function AdminPage({ products, setProducts, roundOpen, setRoundOpen }: {
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
             <h3 style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: 14, letterSpacing: '.1em', textTransform: 'uppercase', color: G.muted }}>Products</h3>
-            <Btn size='sm' onClick={() => setEditProd({ name: '', description: '', emoji: '🥩', unitPrice: 0, unit: 'kg', image_url: '', active: true })}>+ Add Product</Btn>
+            <Btn size='sm' onClick={() => setEditProd({ name: '', description: '', emoji: '🥩', price: 0, unit: 'KG', image_url: '', active: true })}>+ Add Product</Btn>
           </div>
 
           {editProd && !editProd.id && (
@@ -700,16 +655,17 @@ function AdminPage({ products, setProducts, roundOpen, setRoundOpen }: {
                 : (
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
-                      <span style={{ fontSize: 26 }}>{p.emoji}</span>
+                      <span style={{ fontSize: 26 }}>{p.emoji || '🥩'}</span>
                       <div>
                         <div style={{ fontWeight: 700 }}>{p.name}</div>
-                        <div style={{ fontSize: 12, color: G.muted }}>{p.isEnquiry ? 'Enquiry' : `S$${p.unitPrice}/${p.unit}`}</div>
+                        <div style={{ fontSize: 12, color: G.muted }}>S${p.price}/{p.unit}</div>
                       </div>
                       <Badge color={p.active ? G.green : G.red}>{p.active ? 'Active' : 'Hidden'}</Badge>
                     </div>
                     <div style={{ display: 'flex', gap: 8 }}>
-                      <Btn size='sm' variant='ghost' onClick={() => setEditProd(p)}>Edit</Btn>
-                      <Btn size='sm' variant='danger' onClick={() => deleteProd(p.id)}>Delete</Btn>
+                      <Btn size='sm' variant={p.active ? 'ghost' : 'green'} onClick={() => toggleActive(p)}>{p.active ? 'Hide' : 'Show'}</Btn>
+                      <Btn size='sm' variant='ghost' onClick={() => setEditProd({ ...p })}>Edit</Btn>
+                      <Btn size='sm' variant='danger' onClick={() => { if (confirm(`Delete "${p.name}"?`)) deleteProd(p.id); }}>Delete</Btn>
                     </div>
                   </div>
                 )}
@@ -722,7 +678,6 @@ function AdminPage({ products, setProducts, roundOpen, setRoundOpen }: {
 }
 
 // ── App ───────────────────────────────────────────────────────────────────────
-
 export default function App() {
   const [page, setPage] = useState('Shop');
   const [products, setProducts] = useState<Product[]>([]);
