@@ -490,6 +490,7 @@ function AdminPage({ products, setProducts, roundOpen, setRoundOpen }: {
   const [tab, setTab] = useState('orders');
   const [orders, setOrders] = useState<Order[]>([]);
   const [editProd, setEditProd] = useState<Product | null>(null);
+  const [saveStatus, setSaveStatus] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
 
   useEffect(() => {
     if (authed) {
@@ -513,19 +514,43 @@ function AdminPage({ products, setProducts, roundOpen, setRoundOpen }: {
   const deleteOrder = (id: string) => saveOrders(orders.filter(o => o.id !== id));
 
   const saveProd = async (p: Product) => {
-    const toSave = { ...p };
-    const { error } = await supabase.from('products').upsert(toSave).select();
-    if (error) { console.error('Failed to save product', error); return; }
-    const { data: all, error: allErr } = await supabase.from('products').select('*').order('created_at', { ascending: false });
-    if (!allErr && all) setProducts(all as Product[]);
-    setEditProd(null);
+    try {
+      setSaveStatus(null);
+      const toSave = { ...p };
+      const { error } = await supabase.from('products').upsert(toSave).select();
+      if (error) throw error;
+      
+      // Reload all products immediately
+      const { data: all, error: allErr } = await supabase.from('products').select('*').order('created_at', { ascending: false });
+      if (allErr) throw allErr;
+      
+      setProducts((all as Product[]).filter(x => x.active !== false));
+      setSaveStatus({ type: 'success', msg: `✓ ${p.name} saved successfully` });
+      setEditProd(null);
+      
+      setTimeout(() => setSaveStatus(null), 3000);
+    } catch (err) {
+      console.error('Failed to save product', err);
+      setSaveStatus({ type: 'error', msg: `✗ Failed to save. Check console.` });
+    }
   };
 
   const deleteProd = async (id: string) => {
-    const { error } = await supabase.from('products').delete().eq('id', id);
-    if (error) console.error('Failed to delete product', error);
-    const { data: all, error: allErr } = await supabase.from('products').select('*').order('created_at', { ascending: false });
-    if (!allErr && all) setProducts(all as Product[]);
+    try {
+      const { error } = await supabase.from('products').delete().eq('id', id);
+      if (error) throw error;
+      
+      // Reload all products immediately
+      const { data: all, error: allErr } = await supabase.from('products').select('*').order('created_at', { ascending: false });
+      if (allErr) throw allErr;
+      
+      setProducts((all as Product[]).filter(x => x.active !== false));
+      setSaveStatus({ type: 'success', msg: '✓ Product deleted' });
+      setTimeout(() => setSaveStatus(null), 2500);
+    } catch (err) {
+      console.error('Failed to delete product', err);
+      setSaveStatus({ type: 'error', msg: '✗ Failed to delete product' });
+    }
   };
 
   const toggleRound = async () => {
@@ -600,6 +625,20 @@ function AdminPage({ products, setProducts, roundOpen, setRoundOpen }: {
 
   return (
     <div style={{ maxWidth: 1100, margin: '0 auto', padding: '28px 20px' }}>
+      {saveStatus && (
+        <div style={{
+          background: saveStatus.type === 'success' ? `${G.green}22` : `${G.red}22`,
+          border: `1px solid ${saveStatus.type === 'success' ? G.green : G.red}66`,
+          borderRadius: 8,
+          padding: '12px 16px',
+          marginBottom: 20,
+          color: saveStatus.type === 'success' ? G.green : G.red,
+          fontWeight: 600,
+          fontSize: 13,
+        }}>
+          {saveStatus.msg}
+        </div>
+      )}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: 30, fontWeight: 900 }}>Admin Panel</h1>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
