@@ -541,7 +541,11 @@ function AdminPage({ products, setProducts, roundOpen, setRoundOpen }: {
       const { data: all, error: allErr } = await supabase.from('products').select('*').order('created_at', { ascending: false });
       if (allErr) throw allErr;
       
-      setProducts((all as Product[]).filter(x => x.active !== false));
+      const productsWithDefaults = (all as Product[]).map(p => ({
+        ...p,
+        unit: p.unit || 'kg',
+      }));
+      setProducts(productsWithDefaults.filter(x => x.active !== false));
       setSaveStatus({ type: 'success', msg: `✓ ${p.name} saved successfully` });
       setEditProd(null);
       
@@ -562,7 +566,11 @@ function AdminPage({ products, setProducts, roundOpen, setRoundOpen }: {
       const { data: all, error: allErr } = await supabase.from('products').select('*').order('created_at', { ascending: false });
       if (allErr) throw allErr;
       
-      setProducts((all as Product[]).filter(x => x.active !== false));
+      const productsWithDefaults = (all as Product[]).map(p => ({
+        ...p,
+        unit: p.unit || 'kg',
+      }));
+      setProducts(productsWithDefaults.filter(x => x.active !== false));
       setSaveStatus({ type: 'success', msg: '✓ Product deleted' });
       setTimeout(() => setSaveStatus(null), 2500);
     } catch (err) {
@@ -755,7 +763,15 @@ export default function App() {
       try {
         const { data: pData, error: pError } = await supabase.from('products').select('*').order('created_at', { ascending: false });
         const { data: rData, error: rError } = await supabase.from('settings').select('value').eq('key', 'roundOpen');
-        if (!pError && pData) setProducts((pData as Product[]).filter(p => p.active !== false));
+        
+        if (!pError && pData) {
+          // Ensure all products have a unit type (default to 'kg')
+          const productsWithDefaults = (pData as Product[]).map(p => ({
+            ...p,
+            unit: p.unit || 'kg',
+          }));
+          setProducts(productsWithDefaults.filter(p => p.active !== false));
+        }
         if (!rError && rData && rData[0]) setRoundOpen(JSON.parse(rData[0].value));
       } catch (err) {
         console.error('Error loading data:', err);
