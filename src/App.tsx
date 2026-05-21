@@ -14,35 +14,31 @@ const G = {
   green: '#27ae60', amber: '#e67e22', gold: '#c9a84c',
 };
 
-const css = `
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Barlow+Condensed:wght@400;600;700&family=Barlow:wght@400;500&display=swap');
+const css = `@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Barlow+Condensed:wght@400;600;700&family=Barlow:wght@400;500&display=swap');
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 body { background: ${G.bg}; color: ${G.cream}; font-family: 'Barlow', sans-serif; }
-input, select, textarea {
-  width: 100%; padding: 10px 14px; background: ${G.surface}; border: 1px solid ${G.border};
-  border-radius: 6px; color: ${G.cream}; font-size: 14px; font-family: 'Barlow', sans-serif;
-  outline: none; transition: border-color 0.2s;
-}
-input:focus, select:focus, textarea:focus { border-color: ${G.red}; }
-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-th { text-align: left; padding: 10px 12px; background: ${G.surface}; color: ${G.muted}; font-family: 'Barlow Condensed', sans-serif; letter-spacing: .08em; text-transform: uppercase; font-size: 11px; }
-td { padding: 12px; border-bottom: 1px solid ${G.border}; vertical-align: top; }
-.notice-bar { background: #1a1209; border: 1px solid ${G.gold}33; border-radius: 8px; padding: 16px 20px; margin-bottom: 28px; }
+input, textarea, select { background: ${G.surface}; border: 1px solid ${G.border}; color: ${G.cream}; border-radius: 6px; padding: 10px 14px; font-size: 14px; width: 100%; outline: none; font-family: 'Barlow', sans-serif; }
+input:focus, textarea:focus, select:focus { border-color: ${G.red}; }
+table { width: 100%; border-collapse: collapse; }
+th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid ${G.border}; font-size: 13px; }
+th { font-family: 'Barlow Condensed', sans-serif; letter-spacing: .08em; text-transform: uppercase; color: ${G.muted}; font-weight: 600; }
+.notice-bar { background: #1a1209; border: 1px solid ${G.gold}44; border-radius: 8px; padding: 16px 20px; margin-bottom: 28px; }
+select option { background: ${G.surface}; }
 `;
 
-// ── Types ──────────────────────────────────────────────────────────────────
+// ── Types ──────────────────────────────────────────────────────────────────────
 
 interface Product {
   id: string;
   name: string;
   description: string;
   emoji: string;
-  price: number;
+  unitPrice: number;
   unit: string;
   image_url?: string;
   active?: boolean;
-  checkAvailability?: boolean;
   isEnquiry?: boolean;
+  checkAvailability?: boolean;
   created_at?: string;
 }
 
@@ -66,32 +62,27 @@ interface Order {
   ts: number;
 }
 
-// ── Shared UI Components ───────────────────────────────────────────────────
+// ── Btn ───────────────────────────────────────────────────────────────────────
 
 type BtnVariant = 'primary' | 'ghost' | 'danger' | 'green' | 'gold';
 
-const Btn = ({
-  children,
-  onClick,
-  variant = 'primary' as BtnVariant,
-  size = 'md',
-  disabled,
-  style = {},
-}: {
+interface BtnProps {
   children: React.ReactNode;
   onClick?: () => void;
   variant?: BtnVariant;
-  size?: string;
+  size?: 'sm' | 'md';
   disabled?: boolean;
   style?: React.CSSProperties;
-}) => {
+}
+
+const Btn = ({ children, onClick, variant = 'primary', size = 'md', disabled = false, style = {} }: BtnProps) => {
   const base: React.CSSProperties = {
     display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6,
     padding: size === 'sm' ? '6px 14px' : '11px 22px',
     fontSize: size === 'sm' ? 13 : 14, fontWeight: 600,
     fontFamily: "'Barlow Condensed', sans-serif", letterSpacing: '.06em',
     borderRadius: 6, border: 'none', cursor: disabled ? 'not-allowed' : 'pointer',
-    opacity: disabled ? 0.5 : 1, transition: 'opacity 0.2s',
+    opacity: disabled ? 0.5 : 1, transition: 'opacity .15s, transform .1s', textDecoration: 'none',
   };
   const variants: Record<BtnVariant, React.CSSProperties> = {
     primary: { background: G.red, color: '#fff' },
@@ -101,31 +92,41 @@ const Btn = ({
     gold: { background: '#2a1f08', color: G.gold, border: `1px solid ${G.gold}66` },
   };
   return (
-    <button onClick={onClick} disabled={disabled} style={{ ...base, ...variants[variant as BtnVariant], ...style }}>
+    <button onClick={onClick} disabled={disabled} style={{ ...base, ...variants[variant], ...style }}>
       {children}
     </button>
   );
 };
 
+// ── Badge ─────────────────────────────────────────────────────────────────────
+
 const Badge = ({ children, color = G.muted }: { children: React.ReactNode; color?: string }) => (
   <span style={{
     display: 'inline-block', padding: '2px 10px', borderRadius: 20, fontSize: 11,
     fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, letterSpacing: '.08em',
-    textTransform: 'uppercase', background: `${color}22`, color,
+    textTransform: 'uppercase', background: color + '22', color,
   }}>
     {children}
   </span>
 );
 
+// ── Modal ─────────────────────────────────────────────────────────────────────
+
 const Modal = ({ children, onClose }: { children: React.ReactNode; onClose: () => void }) => (
-  <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: '#000c', zIndex: 999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-    <div onClick={e => e.stopPropagation()} style={{ background: G.card, border: `1px solid ${G.border}`, borderRadius: 10, padding: 28, maxWidth: 440, width: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
+  <div onClick={onClose} style={{
+    position: 'fixed', inset: 0, background: '#000c', zIndex: 999,
+    display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20,
+  }}>
+    <div onClick={e => e.stopPropagation()} style={{
+      background: G.card, border: `1px solid ${G.border}`, borderRadius: 10,
+      padding: 28, maxWidth: 440, width: '100%', maxHeight: '90vh', overflowY: 'auto',
+    }}>
       {children}
     </div>
   </div>
 );
 
-// ── Nav ────────────────────────────────────────────────────────────────────
+// ── Nav ───────────────────────────────────────────────────────────────────────
 
 function Nav({ page, setPage, roundOpen }: { page: string; setPage: (p: string) => void; roundOpen: boolean }) {
   return (
@@ -142,11 +143,18 @@ function Nav({ page, setPage, roundOpen }: { page: string; setPage: (p: string) 
           <Badge color={roundOpen ? G.green : G.red}>{roundOpen ? '● OPEN' : '● CLOSED'}</Badge>
           <div style={{ display: 'flex', gap: 4, marginLeft: 10 }}>
             {['Shop', 'Order'].map(n => (
-              <button key={n} onClick={() => setPage(n)} style={{ background: page === n ? G.red : 'transparent', color: page === n ? '#fff' : G.muted, padding: '5px 12px', fontSize: 12, borderRadius: 5, border: 'none', cursor: 'pointer', fontFamily: "'Barlow Condensed', sans-serif", letterSpacing: '.06em' }}>
+              <button key={n} onClick={() => setPage(n)} style={{
+                background: page === n ? G.red : 'transparent', color: page === n ? '#fff' : G.muted,
+                padding: '5px 12px', fontSize: 12, borderRadius: 5, border: 'none', cursor: 'pointer',
+                fontFamily: "'Barlow Condensed', sans-serif", letterSpacing: '.08em', fontWeight: 600,
+              }}>
                 {n}
               </button>
             ))}
-            <button onClick={() => setPage('Admin')} style={{ background: 'transparent', color: G.bg, padding: '5px 12px', fontSize: 12, borderRadius: 5, border: 'none', userSelect: 'none', cursor: 'pointer' }}>⚙️</button>
+            <button onClick={() => setPage('Admin')} style={{
+              background: 'transparent', color: G.bg, padding: '5px 12px',
+              fontSize: 12, borderRadius: 5, border: 'none', userSelect: 'none', cursor: 'pointer',
+            }}>⚙️</button>
           </div>
         </div>
       </div>
@@ -154,9 +162,14 @@ function Nav({ page, setPage, roundOpen }: { page: string; setPage: (p: string) 
   );
 }
 
-// ── Shop Page ──────────────────────────────────────────────────────────────
+// ── ShopPage ──────────────────────────────────────────────────────────────────
 
-function ShopPage({ products, setPage, cart, setCart }: { products: Product[]; setPage: (p: string) => void; cart: CartItem[]; setCart: React.Dispatch<React.SetStateAction<CartItem[]>> }) {
+function ShopPage({ products, setPage, cart, setCart }: {
+  products: Product[];
+  setPage: (p: string) => void;
+  cart: CartItem[];
+  setCart: React.Dispatch<React.SetStateAction<CartItem[]>>;
+}) {
   const [configuring, setConfiguring] = useState<Product | null>(null);
   const [sliceWeight, setSliceWeight] = useState('250');
   const [pieces, setPieces] = useState('2');
@@ -170,10 +183,7 @@ function ShopPage({ products, setPage, cart, setCart }: { products: Product[]; s
 
   const isKg = (p: Product) => p.unit === 'kg';
   const isEnquiry = (p: Product) => p.unit === 'enquiry';
-  const isSteak = (p: Product) => {
-    const steakNames = ['ribeye', 'striploin', 'hanger'];
-    return steakNames.some(s => p.name.toLowerCase().includes(s));
-  };
+
   const openModal = (p: Product) => { setSliceWeight('250'); setPieces('2'); setEnquiryNote(''); setConfiguring(p); };
 
   const confirmAdd = () => {
@@ -189,20 +199,20 @@ function ShopPage({ products, setPage, cart, setCart }: { products: Product[]; s
     const sw = parseInt(sliceWeight) || 0;
     const pc = parseInt(pieces) || 0;
     if (sw <= 0 || pc <= 0) return alert('Please enter a valid slice weight and number of pieces.');
-    const price = p.price;
     const totalKg = parseFloat((sw * pc / 1000).toFixed(4));
-    const lineTotal = parseFloat((totalKg * price).toFixed(2));
+    const lineTotal = parseFloat((totalKg * p.unitPrice).toFixed(2));
     setCart(c => [...c, { ...p, cartKey: `${p.id}_${Date.now()}`, sliceWeight: sw, pieces: pc, totalKg, lineTotal, qty: 1 }]);
     showToast(p.name);
     setConfiguring(null);
   };
 
   const addPackToCart = (p: Product) => {
-    const price = p.price;
     setCart(c => {
       const ex = c.find(x => x.id === p.id && !x.sliceWeight);
-      if (ex) return c.map(x => (x.id === p.id && !x.sliceWeight) ? { ...x, qty: x.qty + 1, lineTotal: parseFloat(((x.qty + 1) * price).toFixed(2)) } : x);
-      return [...c, { ...p, cartKey: p.id, qty: 1, lineTotal: price }];
+      if (ex) return c.map(x => (x.id === p.id && !x.sliceWeight)
+        ? { ...x, qty: x.qty + 1, lineTotal: parseFloat(((x.qty + 1) * p.unitPrice).toFixed(2)) }
+        : x);
+      return [...c, { ...p, cartKey: p.id, qty: 1, lineTotal: p.unitPrice }];
     });
     showToast(p.name);
   };
@@ -210,7 +220,7 @@ function ShopPage({ products, setPage, cart, setCart }: { products: Product[]; s
   const sw = parseInt(sliceWeight) || 0;
   const pc = parseInt(pieces) || 0;
   const estKg = sw > 0 && pc > 0 ? (sw * pc / 1000).toFixed(3) : null;
-  const estCost = configuring && estKg ? (parseFloat(estKg) * configuring.price).toFixed(2) : null;
+  const estCost = configuring && estKg ? (parseFloat(estKg) * configuring.unitPrice).toFixed(2) : null;
   const cartCount = cart.length;
   const fmtPrice = (v: number) => v % 1 === 0 ? `${v}` : v.toFixed(2);
 
@@ -239,16 +249,18 @@ function ShopPage({ products, setPage, cart, setCart }: { products: Product[]; s
             <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, fontWeight: 900, marginBottom: 4 }}>{configuring.name}</h2>
             {!isEnquiry(configuring) && (
               <div style={{ fontFamily: "'Barlow Condensed', sans-serif", color: G.red, fontSize: 16 }}>
-                S${fmtPrice(configuring.price)}/{configuring.unit}
+                S${fmtPrice(configuring.unitPrice)}/{configuring.unit}
                 <span style={{ fontSize: 11, color: G.muted, marginLeft: 8 }}>(slab price)</span>
               </div>
             )}
           </div>
+
           {configuring.checkAvailability && (
             <div style={{ background: '#2a1f08', border: `1px solid ${G.gold}44`, borderRadius: 6, padding: 10, marginBottom: 14, fontSize: 12, color: G.gold }}>
               ⚠️ Please check with me on WhatsApp first to confirm availability before placing this item in your order.
             </div>
           )}
+
           {isEnquiry(configuring) ? (
             <div style={{ marginBottom: 16 }}>
               <label style={{ fontSize: 12, color: G.muted, letterSpacing: '.08em', textTransform: 'uppercase', display: 'block', marginBottom: 6 }}>What are you looking for?</label>
@@ -284,6 +296,7 @@ function ShopPage({ products, setPage, cart, setCart }: { products: Product[]; s
               )}
             </>
           )}
+
           <div style={{ display: 'flex', gap: 10 }}>
             <Btn onClick={confirmAdd} style={{ flex: 1 }}>Add to Order ✓</Btn>
             <Btn onClick={() => setConfiguring(null)} variant='ghost'>Cancel</Btn>
@@ -294,7 +307,7 @@ function ShopPage({ products, setPage, cart, setCart }: { products: Product[]; s
       <div className='notice-bar'>
         <div style={{ fontFamily: "'Barlow Condensed', sans-serif", color: G.gold, fontSize: 13, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: 6 }}>ℹ️ Important — Please Read</div>
         <p style={{ fontSize: 13, lineHeight: 1.7, color: G.cream }}>
-          All beef is sourced directly from <strong style={{ color: G.gold }}>Mornington Butchery &amp; Pantry</strong>. I am simply collating orders on behalf of our group — I do not process, prepare, or handle the meat. Final prices are based on actual weight at collection.
+          All beef is sourced directly from <strong style={{ color: G.gold }}>Mornington Butchery &amp; Pantry</strong>. I am simply collating orders on behalf of our group — I do not process, prepare, or handle the meat. All payments and pickups are arranged directly between you and the butchery via WhatsApp.
         </p>
       </div>
 
@@ -308,12 +321,16 @@ function ShopPage({ products, setPage, cart, setCart }: { products: Product[]; s
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 18 }}>
         {products.map(p => (
-          <div key={p.id} style={{ background: G.card, border: `1px solid ${G.border}`, borderRadius: 10, overflow: 'hidden', transition: 'transform 0.18s, box-shadow 0.18s' }}
+          <div key={p.id}
+            style={{ background: G.card, border: `1px solid ${G.border}`, borderRadius: 10, overflow: 'hidden', transition: 'transform 0.18s, box-shadow 0.18s' }}
             onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-3px)'; (e.currentTarget as HTMLDivElement).style.boxShadow = '0 8px 32px #0006'; }}
             onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.transform = ''; (e.currentTarget as HTMLDivElement).style.boxShadow = ''; }}>
             {p.image_url
               ? <img src={p.image_url} alt={p.name} style={{ width: '100%', height: 160, objectFit: 'cover', objectPosition: 'center' }} />
-              : <div style={{ background: isEnquiry(p) ? 'linear-gradient(135deg, #1a1a2e, #0f0f1a)' : 'linear-gradient(135deg, #2a1a18, #1a1210)', height: 160, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 52 }}>{p.emoji}</div>
+              : <div style={{
+                  background: p.isEnquiry ? 'linear-gradient(135deg, #1a1a2e, #0f0f1a)' : 'linear-gradient(135deg, #2a1a18, #1a1210)',
+                  height: 160, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 56,
+                }}>{p.emoji}</div>
             }
             <div style={{ padding: 18 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6, gap: 8 }}>
@@ -323,18 +340,18 @@ function ShopPage({ products, setPage, cart, setCart }: { products: Product[]; s
               {p.checkAvailability && (
                 <div style={{ fontSize: 11, color: G.gold, marginBottom: 8 }}>⚠️ Check WhatsApp for availability</div>
               )}
-              {!isEnquiry(p) && p.price > 0 && (
+              {!p.isEnquiry && p.unitPrice > 0 && (
                 <div style={{ marginBottom: 14 }}>
                   <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: 22, fontWeight: 700 }}>
-                    S${fmtPrice(p.price)}<span style={{ fontSize: 12, color: G.muted }}>/{p.unit}</span>
+                    S${fmtPrice(p.unitPrice)}<span style={{ fontSize: 12, color: G.muted }}>/{p.unit}</span>
                   </div>
                 </div>
               )}
               <Btn
-                onClick={() => isEnquiry(p) ? openModal(p) : (isKg(p) || isSteak(p) ? openModal(p) : addPackToCart(p))}
-                variant={isEnquiry(p) ? 'gold' : 'primary'}
+                onClick={() => p.isEnquiry ? openModal(p) : (isKg(p) ? openModal(p) : addPackToCart(p))}
+                variant={p.isEnquiry ? 'gold' : 'primary'}
                 style={{ width: '100%' }}>
-                {isEnquiry(p) ? '✉️ Submit Enquiry' : (isKg(p) || isSteak(p) ? 'Add to Cart' : 'Add to Order')}
+                {p.isEnquiry ? '✉️ Submit Enquiry' : (isKg(p) ? 'Add to Cart' : 'Add to Order')}
               </Btn>
             </div>
           </div>
@@ -344,9 +361,13 @@ function ShopPage({ products, setPage, cart, setCart }: { products: Product[]; s
   );
 }
 
-// ── Order Page ─────────────────────────────────────────────────────────────
+// ── OrderPage ─────────────────────────────────────────────────────────────────
 
-function OrderPage({ roundOpen, cart, setCart }: { roundOpen: boolean; cart: CartItem[]; setCart: React.Dispatch<React.SetStateAction<CartItem[]>> }) {
+function OrderPage({ roundOpen, cart, setCart }: {
+  roundOpen: boolean;
+  cart: CartItem[];
+  setCart: React.Dispatch<React.SetStateAction<CartItem[]>>;
+}) {
   const [name, setName] = useState('');
   const [wa, setWa] = useState('');
   const [submitted, setSubmitted] = useState<Order | null>(null);
@@ -359,7 +380,7 @@ function OrderPage({ roundOpen, cart, setCart }: { roundOpen: boolean; cart: Car
       : x));
   };
 
-  const total = parseFloat(cart.reduce((a: number, b: CartItem) => a + b.lineTotal, 0).toFixed(2));
+  const total = parseFloat(cart.reduce((a, b) => a + b.lineTotal, 0).toFixed(2));
 
   const submit = async () => {
     if (!name.trim() || !wa.trim() || cart.length === 0) return alert('Please fill in your name, WhatsApp number, and add at least one item.');
@@ -427,6 +448,7 @@ function OrderPage({ roundOpen, cart, setCart }: { roundOpen: boolean; cart: Car
     <div style={{ maxWidth: 680, margin: '0 auto', padding: '32px 20px' }}>
       <div style={{ fontFamily: "'Barlow Condensed', sans-serif", color: G.red, letterSpacing: '.14em', textTransform: 'uppercase', fontSize: 12, marginBottom: 4 }}>Your Order</div>
       <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: 36, fontWeight: 900, marginBottom: 24 }}>Review &amp; Submit</h1>
+
       <div style={{ background: G.card, border: `1px solid ${G.border}`, borderRadius: 8, padding: 20, marginBottom: 20 }}>
         <h3 style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: 14, letterSpacing: '.1em', textTransform: 'uppercase', color: G.muted, marginBottom: 14 }}>Your Details</h3>
         <div style={{ display: 'grid', gap: 12 }}>
@@ -437,11 +459,12 @@ function OrderPage({ roundOpen, cart, setCart }: { roundOpen: boolean; cart: Car
           📲 After submitting, you'll be prompted to confirm your order via WhatsApp to <strong style={{ color: G.gold }}>+65 9662 5208</strong>. Pickup details will be arranged there.
         </div>
       </div>
+
       <div style={{ background: G.card, border: `1px solid ${G.border}`, borderRadius: 8, padding: 20, marginBottom: 20 }}>
         <h3 style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: 14, letterSpacing: '.1em', textTransform: 'uppercase', color: G.muted, marginBottom: 14 }}>Order Items</h3>
         {cart.length === 0
           ? <p style={{ color: G.muted, fontSize: 14 }}>No items yet. Go to Shop to add cuts.</p>
-          : cart.map((item: CartItem) => (
+          : cart.map(item => (
             <div key={item.cartKey} style={{ padding: '12px 0', borderBottom: `1px solid ${G.border}` }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div style={{ flex: 1 }}>
@@ -455,7 +478,7 @@ function OrderPage({ roundOpen, cart, setCart }: { roundOpen: boolean; cart: Car
                       <button onClick={() => updatePackQty(item.cartKey, -1)} style={{ width: 26, height: 26, borderRadius: 4, background: G.surface, color: G.cream, fontSize: 16, border: `1px solid ${G.border}`, cursor: 'pointer' }}>−</button>
                       <span style={{ fontWeight: 700 }}>{item.qty}</span>
                       <button onClick={() => updatePackQty(item.cartKey, 1)} style={{ width: 26, height: 26, borderRadius: 4, background: G.surface, color: G.cream, fontSize: 16, border: `1px solid ${G.border}`, cursor: 'pointer' }}>+</button>
-                      <span style={{ fontSize: 12, color: G.muted }}>× S${item.price}/pack</span>
+                      <span style={{ fontSize: 12, color: G.muted }}>× S${item.unitPrice}/pack</span>
                     </div>
                   )}
                 </div>
@@ -472,25 +495,25 @@ function OrderPage({ roundOpen, cart, setCart }: { roundOpen: boolean; cart: Car
           </div>
         )}
       </div>
+
       <Btn onClick={submit} disabled={cart.length === 0} style={{ width: '100%', fontSize: 15 }}>Submit Order →</Btn>
     </div>
   );
 }
 
-// ── Admin Page ─────────────────────────────────────────────────────────────
+// ── AdminPage ─────────────────────────────────────────────────────────────────
 
 function AdminPage({ products, setProducts, roundOpen, setRoundOpen }: {
   products: Product[];
   setProducts: React.Dispatch<React.SetStateAction<Product[]>>;
   roundOpen: boolean;
-  setRoundOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  setRoundOpen: (v: boolean) => void;
 }) {
   const [authed, setAuthed] = useState(false);
   const [pass, setPass] = useState('');
   const [tab, setTab] = useState('orders');
   const [orders, setOrders] = useState<Order[]>([]);
-  const [editProd, setEditProd] = useState<Product | null>(null);
-  const [saveStatus, setSaveStatus] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
+  const [editProd, setEditProd] = useState<Partial<Product> | null>(null);
 
   useEffect(() => {
     if (authed) {
@@ -505,70 +528,30 @@ function AdminPage({ products, setProducts, roundOpen, setRoundOpen }: {
     setOrders((data as Order[]) || []);
   };
 
-  const saveOrders = async (o: Order[]) => {
-    setOrders(o);
-    await supabase.from('moo_orders').upsert(o);
+  const updateStatus = async (id: string, status: string) => {
+    setOrders(prev => prev.map(o => o.id === id ? { ...o, status } : o));
+    await supabase.from('moo_orders').update({ status }).eq('id', id);
   };
 
-  const updateStatus = (id: string, status: string) => saveOrders(orders.map(o => o.id === id ? { ...o, status } : o));
-  const deleteOrder = (id: string) => saveOrders(orders.filter(o => o.id !== id));
+  const deleteOrder = async (id: string) => {
+    setOrders(prev => prev.filter(o => o.id !== id));
+    await supabase.from('moo_orders').delete().eq('id', id);
+  };
 
-  const saveProd = async (p: Product) => {
-    try {
-      setSaveStatus(null);
-      
-      // Validate required fields
-      if (!p.name?.trim()) throw new Error('Product name is required');
-      if (!p.unit) throw new Error('Unit type is required');
-      if (p.price === undefined || p.price === null) throw new Error('Price is required');
-      
-      const toSave: Product = {
-        id: p.id,
-        name: p.name.trim(),
-        description: p.description || '',
-        emoji: p.emoji || '🥩',
-        price: parseFloat(String(p.price)) || 0,
-        unit: p.unit || 'kg',
-        image_url: p.image_url || null,
-        active: p.active !== false,
-        checkAvailability: p.checkAvailability || false,
-      };
-      
-      const { error } = await supabase.from('products').upsert(toSave).select();
-      if (error) throw error;
-      
-      // Reload all products immediately
-      const { data: all, error: allErr } = await supabase.from('products').select('*').order('created_at', { ascending: false });
-      if (allErr) throw allErr;
-      
-      setProducts((all as Product[]).filter(x => x.active !== false));
-      setSaveStatus({ type: 'success', msg: `✓ ${p.name} saved successfully` });
-      setEditProd(null);
-      
-      setTimeout(() => setSaveStatus(null), 3000);
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Unknown error';
-      console.error('Failed to save product:', msg, err);
-      setSaveStatus({ type: 'error', msg: `✗ ${msg}` });
-    }
+  const saveProd = async (p: Partial<Product>) => {
+    const toSave = { ...p };
+    const { error } = await supabase.from('products').upsert(toSave).select();
+    if (error) { console.error('Failed to save product', error); return; }
+    const { data: all, error: allErr } = await supabase.from('products').select('*').order('created_at', { ascending: false });
+    if (!allErr && all) setProducts(all as Product[]);
+    setEditProd(null);
   };
 
   const deleteProd = async (id: string) => {
-    try {
-      const { error } = await supabase.from('products').delete().eq('id', id);
-      if (error) throw error;
-      
-      // Reload all products immediately
-      const { data: all, error: allErr } = await supabase.from('products').select('*').order('created_at', { ascending: false });
-      if (allErr) throw allErr;
-      
-      setProducts((all as Product[]).filter(x => x.active !== false));
-      setSaveStatus({ type: 'success', msg: '✓ Product deleted' });
-      setTimeout(() => setSaveStatus(null), 2500);
-    } catch (err) {
-      console.error('Failed to delete product', err);
-      setSaveStatus({ type: 'error', msg: '✗ Failed to delete product' });
-    }
+    const { error } = await supabase.from('products').delete().eq('id', id);
+    if (error) console.error('Failed to delete product', error);
+    const { data: all, error: allErr } = await supabase.from('products').select('*').order('created_at', { ascending: false });
+    if (!allErr && all) setProducts(all as Product[]);
   };
 
   const toggleRound = async () => {
@@ -578,12 +561,12 @@ function AdminPage({ products, setProducts, roundOpen, setRoundOpen }: {
   };
 
   const exportCSV = () => {
-    const rows = [
+    const rows: string[][] = [
       ['Name', 'WhatsApp', 'Items', 'Total', 'Status', 'Date'],
       ...orders.map(o => [
         o.name, o.wa,
-        o.items.map((i: CartItem) => i.isEnquiry ? `${i.name}: ${i.enquiryNote}` : i.sliceWeight ? `${i.name} ${i.pieces}pc×${i.sliceWeight}g` : `${i.name} x${i.qty}`).join('; '),
-        `S$${o.total.toFixed(2)}`, o.status, new Date(o.ts).toLocaleDateString(),
+        o.items.map(i => i.isEnquiry ? `${i.name}: ${i.enquiryNote}` : i.sliceWeight ? `${i.name} ${i.pieces}pc×${i.sliceWeight}g` : `${i.name} x${i.qty}`).join('; '),
+        `S$${o.total.toFixed(2)}`, o.status, new Date(o.ts).toLocaleString(),
       ]),
     ];
     const csv = rows.map(r => r.map(c => `"${c}"`).join(',')).join('\n');
@@ -593,24 +576,27 @@ function AdminPage({ products, setProducts, roundOpen, setRoundOpen }: {
     a.click();
   };
 
-  const statusColor = (s: string) => ({ Pending: G.amber, Paid: G.green, Collected: G.muted, Filled: G.green } as Record<string, string>)[s] || G.muted;
+  const statusColors: Record<string, string> = { Pending: G.amber, Paid: G.green, Collected: G.muted, Filled: G.green };
+  const statusColor = (s: string) => statusColors[s] || G.muted;
+
   const tabStyle = (t: string): React.CSSProperties => ({
-    background: tab === t ? G.red : 'transparent', color: tab === t ? '#fff' : G.muted,
+    background: tab === t ? G.red : 'transparent',
+    color: tab === t ? '#fff' : G.muted,
     padding: '8px 16px', fontSize: 13, borderRadius: 5,
-    fontFamily: "'Barlow Condensed', sans-serif", letterSpacing: '.06em',
-    border: 'none', cursor: 'pointer', textTransform: 'capitalize',
+    fontFamily: "'Barlow Condensed', sans-serif",
+    letterSpacing: '.08em', fontWeight: 600, border: 'none', cursor: 'pointer',
   });
 
-  const ProdForm = ({ p, onSave, onCancel }: { p: Product | null; onSave: (f: Product) => void; onCancel: () => void }) => {
-    const [f, setF] = useState<Product>(p || { id: '', name: '', description: '', emoji: '🥩', price: 0, unit: 'kg', image_url: '', active: true });
+  const ProdForm = ({ p, onSave, onCancel }: { p: Partial<Product>; onSave: (f: Partial<Product>) => void; onCancel: () => void }) => {
+    const [f, setF] = useState<Partial<Product>>(p || { name: '', description: '', emoji: '🥩', unitPrice: 0, unit: 'kg', image_url: '', active: true });
     return (
       <div style={{ display: 'grid', gap: 10 }}>
-        <input placeholder='Product Name' value={f.name} onChange={e => setF({ ...f, name: e.target.value })} />
-        <input placeholder='Description' value={f.description} onChange={e => setF({ ...f, description: e.target.value })} />
-        <input placeholder='Emoji' value={f.emoji} onChange={e => setF({ ...f, emoji: e.target.value })} />
+        <input placeholder='Product Name' value={f.name || ''} onChange={e => setF({ ...f, name: e.target.value })} />
+        <input placeholder='Description' value={f.description || ''} onChange={e => setF({ ...f, description: e.target.value })} />
+        <input placeholder='Emoji' value={f.emoji || ''} onChange={e => setF({ ...f, emoji: e.target.value })} />
         <input placeholder='Image URL (public)' value={f.image_url || ''} onChange={e => setF({ ...f, image_url: e.target.value })} />
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-          <input placeholder='Price (slab/unit)' type='number' value={f.price || 0} onChange={e => setF({ ...f, price: parseFloat(e.target.value) || 0 })} />
+          <input placeholder='Price (slab/unit)' type='number' value={f.unitPrice ?? 0} onChange={e => setF({ ...f, unitPrice: parseFloat(e.target.value) || 0 })} />
           <select value={f.unit || 'kg'} onChange={e => setF({ ...f, unit: e.target.value })}>
             <option value='kg'>per kg</option>
             <option value='pack'>per pack</option>
@@ -636,27 +622,15 @@ function AdminPage({ products, setProducts, roundOpen, setRoundOpen }: {
   if (!authed) return (
     <div style={{ maxWidth: 400, margin: '100px auto', padding: 20 }}>
       <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 30, marginBottom: 20, textAlign: 'center' }}>Admin</h2>
-      <input type='password' placeholder='Password' value={pass} onChange={e => setPass(e.target.value)} onKeyDown={e => e.key === 'Enter' && (pass === ADMIN_PASS ? setAuthed(true) : alert('Wrong password'))} style={{ marginBottom: 12 }} />
+      <input type='password' placeholder='Password' value={pass} onChange={e => setPass(e.target.value)}
+        onKeyDown={e => { if (e.key === 'Enter') { pass === ADMIN_PASS ? setAuthed(true) : alert('Wrong password'); } }}
+        style={{ marginBottom: 12 }} />
       <Btn onClick={() => pass === ADMIN_PASS ? setAuthed(true) : alert('Wrong password')} style={{ width: '100%' }}>Login</Btn>
     </div>
   );
 
   return (
     <div style={{ maxWidth: 1100, margin: '0 auto', padding: '28px 20px' }}>
-      {saveStatus && (
-        <div style={{
-          background: saveStatus.type === 'success' ? `${G.green}22` : `${G.red}22`,
-          border: `1px solid ${saveStatus.type === 'success' ? G.green : G.red}66`,
-          borderRadius: 8,
-          padding: '12px 16px',
-          marginBottom: 20,
-          color: saveStatus.type === 'success' ? G.green : G.red,
-          fontWeight: 600,
-          fontSize: 13,
-        }}>
-          {saveStatus.msg}
-        </div>
-      )}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: 30, fontWeight: 900 }}>Admin Panel</h1>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
@@ -682,13 +656,17 @@ function AdminPage({ products, setProducts, roundOpen, setRoundOpen }: {
                   <tr key={o.id}>
                     <td style={{ fontWeight: 600 }}>{o.name}</td>
                     <td style={{ color: G.muted }}>{o.wa}</td>
-                    <td style={{ fontSize: 12 }}>{o.items.map((i: CartItem, idx: number) => <div key={idx}>{i.emoji} {i.name}{i.isEnquiry ? ` · ${i.enquiryNote}` : i.sliceWeight ? ` · ${i.pieces}pc×${i.sliceWeight}g` : ` ×${i.qty}`}</div>)}</td>
+                    <td style={{ fontSize: 12 }}>
+                      {o.items.map((i, idx) => (
+                        <div key={idx}>{i.emoji} {i.name}{i.isEnquiry ? ` · ${i.enquiryNote}` : i.sliceWeight ? ` · ${i.pieces}pc×${i.sliceWeight}g` : ` x${i.qty}`}</div>
+                      ))}
+                    </td>
                     <td style={{ fontWeight: 700, color: G.red }}>S${o.total.toFixed(2)}</td>
                     <td><Badge color={statusColor(o.status)}>{o.status}</Badge></td>
                     <td style={{ color: G.muted, fontSize: 12 }}>{new Date(o.ts).toLocaleDateString()}</td>
                     <td>
                       <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-                        {['Pending', 'Paid', 'Collected'].filter(s => s !== o.status).map(s => (
+                        {(['Pending', 'Paid', 'Collected'] as string[]).filter(s => s !== o.status).map(s => (
                           <Btn key={s} onClick={() => updateStatus(o.id, s)} variant='ghost' size='sm'>{s}</Btn>
                         ))}
                         <Btn onClick={() => deleteOrder(o.id)} variant='danger' size='sm'>✕</Btn>
@@ -705,14 +683,16 @@ function AdminPage({ products, setProducts, roundOpen, setRoundOpen }: {
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
             <h3 style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: 14, letterSpacing: '.1em', textTransform: 'uppercase', color: G.muted }}>Products</h3>
-            <Btn size='sm' onClick={() => setEditProd({ id: '', name: '', description: '', emoji: '🥩', price: 0, unit: 'kg', image_url: '', active: true })}>+ Add Product</Btn>
+            <Btn size='sm' onClick={() => setEditProd({ name: '', description: '', emoji: '🥩', unitPrice: 0, unit: 'kg', image_url: '', active: true })}>+ Add Product</Btn>
           </div>
+
           {editProd && !editProd.id && (
             <div style={{ background: G.card, border: `1px solid ${G.red}44`, borderRadius: 8, padding: 20, marginBottom: 16 }}>
               <h4 style={{ marginBottom: 14, fontFamily: "'Barlow Condensed', sans-serif", letterSpacing: '.08em', textTransform: 'uppercase', color: G.muted, fontSize: 12 }}>New Product</h4>
               <ProdForm p={editProd} onSave={saveProd} onCancel={() => setEditProd(null)} />
             </div>
           )}
+
           {products.map(p => (
             <div key={p.id} style={{ background: G.card, border: `1px solid ${G.border}`, borderRadius: 8, padding: 16, marginBottom: 10 }}>
               {editProd?.id === p.id
@@ -723,7 +703,7 @@ function AdminPage({ products, setProducts, roundOpen, setRoundOpen }: {
                       <span style={{ fontSize: 26 }}>{p.emoji}</span>
                       <div>
                         <div style={{ fontWeight: 700 }}>{p.name}</div>
-                        <div style={{ fontSize: 12, color: G.muted }}>{p.unit === 'enquiry' ? 'Enquiry' : `S$${p.price}/${p.unit}`}</div>
+                        <div style={{ fontSize: 12, color: G.muted }}>{p.isEnquiry ? 'Enquiry' : `S$${p.unitPrice}/${p.unit}`}</div>
                       </div>
                       <Badge color={p.active ? G.green : G.red}>{p.active ? 'Active' : 'Hidden'}</Badge>
                     </div>
@@ -741,7 +721,7 @@ function AdminPage({ products, setProducts, roundOpen, setRoundOpen }: {
   );
 }
 
-// ── Root App ───────────────────────────────────────────────────────────────
+// ── App ───────────────────────────────────────────────────────────────────────
 
 export default function App() {
   const [page, setPage] = useState('Shop');
@@ -755,10 +735,7 @@ export default function App() {
       try {
         const { data: pData, error: pError } = await supabase.from('products').select('*').order('created_at', { ascending: false });
         const { data: rData, error: rError } = await supabase.from('settings').select('value').eq('key', 'roundOpen');
-        
-        if (!pError && pData) {
-          setProducts((pData as Product[]).filter(p => p.active !== false));
-        }
+        if (!pError && pData) setProducts((pData as Product[]).filter(p => p.active === true));
         if (!rError && rData && rData[0]) setRoundOpen(JSON.parse(rData[0].value));
       } catch (err) {
         console.error('Error loading data:', err);
