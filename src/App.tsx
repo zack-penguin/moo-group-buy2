@@ -170,6 +170,10 @@ function ShopPage({ products, setPage, cart, setCart }: { products: Product[]; s
 
   const isKg = (p: Product) => p.unit === 'kg';
   const isEnquiry = (p: Product) => p.unit === 'enquiry';
+  const isSteak = (p: Product) => {
+    const steakNames = ['ribeye', 'striploin', 'hanger'];
+    return steakNames.some(s => p.name.toLowerCase().includes(s));
+  };
   const openModal = (p: Product) => { setSliceWeight('250'); setPieces('2'); setEnquiryNote(''); setConfiguring(p); };
 
   const confirmAdd = () => {
@@ -327,10 +331,10 @@ function ShopPage({ products, setPage, cart, setCart }: { products: Product[]; s
                 </div>
               )}
               <Btn
-                onClick={() => isEnquiry(p) ? openModal(p) : (isKg(p) ? openModal(p) : addPackToCart(p))}
+                onClick={() => isEnquiry(p) ? openModal(p) : (isKg(p) || isSteak(p) ? openModal(p) : addPackToCart(p))}
                 variant={isEnquiry(p) ? 'gold' : 'primary'}
                 style={{ width: '100%' }}>
-                {isEnquiry(p) ? '✉️ Submit Enquiry' : (isKg(p) ? 'Add to Cart' : 'Add to Order')}
+                {isEnquiry(p) ? '✉️ Submit Enquiry' : (isKg(p) || isSteak(p) ? 'Add to Cart' : 'Add to Order')}
               </Btn>
             </div>
           </div>
